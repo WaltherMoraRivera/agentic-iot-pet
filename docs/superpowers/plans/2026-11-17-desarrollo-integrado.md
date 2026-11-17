@@ -12,7 +12,7 @@
 
 **Spec:** [diseño aprobado, revisión 1.0](../specs/2026-11-17-diseno-software.md). Leerlo junto con este plan.
 
-**Estado del plan:** preparado el 17 de noviembre de 2026. Ninguna tarea de producto está ejecutada. Las firmas y rutas siguientes son decisiones para implementar, no APIs existentes.
+**Estado del plan:** aprobado inicialmente por Walther. Las asignaciones actuales y descomposición del backlog se consultan en GitHub y docs/equipo/BACKLOG.md; prevalecen sobre los roles genéricos A/B/C de redacción. Ninguna tarea de producto está ejecutada. Las firmas y rutas siguientes son decisiones para implementar, no APIs existentes.
 
 ## Global Constraints
 

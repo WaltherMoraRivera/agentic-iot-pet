@@ -53,3 +53,5 @@ Las limitaciones se registran; un resultado simulado nunca se presenta como prue
 ## Planificación compartida
 
 [OpenSpec, responsabilidades, etiquetas y uso de GitHub](docs/equipo/OPENSPEC_GITHUB.md). Los issues y milestones se derivan de los cambios OpenSpec; el alcance opcional queda separado.
+
+[Backlog publicado con responsables](docs/equipo/BACKLOG.md) · [Issues](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues) · [Milestones](https://github.com/WaltherMoraRivera/agentic-iot-pet/milestones).

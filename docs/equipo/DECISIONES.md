@@ -32,3 +32,7 @@ Se proponen módulos Gradle `shared`, `androidApp`, `desktopApp` y `simulator`; 
 ## Cómo registrar un cambio
 
 Añadir fecha, ID, problema, decisión, alternativas relevantes, tareas afectadas y aprobación cuando cambie el alcance. Vincular evidencia si responde a una prueba. No reemplazar un fallo observado por una promesa ni reescribir acuerdos históricos para ocultar un recorte.
+
+## Organización y plan aprobados posteriormente
+
+Walther aprobó inicialmente el plan ejecutable y autorizó conectar y publicar en `WaltherMoraRivera/agentic-iot-pet`. Walther lidera con flexibilidad; Maximiliano colabora con foco en pruebas físicas; Winderson se enfoca en gráficos e interfaz. Los responsables nominales vigentes están en BACKLOG.md y los issues. OpenSpec organiza requisitos y escenarios; MoSCoW organiza prioridades. Las etiquetas Modelo/Esfuerzo describen capacidad y razonamiento, no horas.
