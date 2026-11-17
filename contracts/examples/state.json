@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "boot_id": "33333333-3333-4333-8333-333333333333",
+  "expression": "idle",
+  "owner_client_id": "22222222-2222-4222-8222-222222222222",
+  "lease_epoch": 1,
+  "lease_remaining_ms": 6000,
+  "uptime_ms": 1000
+}

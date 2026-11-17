@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pet IoT initial expression command v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "request_id", "client_id", "boot_id", "lease_epoch", "sequence", "action", "params"],
+  "properties": {
+    "version": {"type": "integer", "const": 1},
+    "request_id": {"$ref": "#/$defs/uuid"},
+    "client_id": {"$ref": "#/$defs/uuid"},
+    "boot_id": {"$ref": "#/$defs/uuid"},
+    "lease_epoch": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+    "sequence": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+    "action": {"const": "expression.set"},
+    "params": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expression", "duration_ms"],
+      "properties": {
+        "expression": {"enum": ["idle", "happy", "thinking", "alert"]},
+        "duration_ms": {"type": "integer", "minimum": 100, "maximum": 5000}
+      }
+    }
+  },
+  "$defs": {
+    "uuid": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"}
+  }
+}

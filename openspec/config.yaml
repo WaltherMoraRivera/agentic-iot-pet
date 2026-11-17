@@ -1,0 +1,7 @@
+schema: spec-driven
+context: |
+  Asistente IoT ESP32-S3, Android y Windows. Diseño y plan aprobados.
+  Equipo: Walther lider e integrador; Maximiliano pruebas fisicas; Winderson visual.
+  Entrega objetivo 2026-12-16. APIs opcionales, funcionamiento local obligatorio.
+  GitHub issues gestiona asignacion/prioridad; OpenSpec requisitos y escenarios.
+  Nunca presentar especificaciones propuestas como funciones implementadas.

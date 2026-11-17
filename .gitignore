@@ -1,0 +1,48 @@
+# Privado
+.env
+.env.*
+!.env.example
+secrets/
+local-data/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+key.properties
+local.properties
+CLAUDE.local.md
+.claude/settings.local.json
+.codex/
+# Compilación y herramientas
+.gradle/
+.kotlin/
+.idea/
+*.iml
+**/build/
+**/.cxx/
+**/.externalNativeBuild/
+captures/
+*.apk
+*.aab
+*.exe
+*.msi
+# Conservar sdkconfig.defaults y dependencies.lock
+firmware/**/sdkconfig
+firmware/**/sdkconfig.old
+firmware/**/managed_components/
+# Datos de ejecución
+*.log
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+__pycache__/
+.venv/
+# Sistema
+.DS_Store
+Thumbs.db
+Desktop.ini
