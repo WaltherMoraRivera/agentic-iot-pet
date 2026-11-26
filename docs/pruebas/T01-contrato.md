@@ -1,6 +1,6 @@
 # Casos de prueba de T01
 
-Estos casos preparan el [issue #4](https://github.com/wmrDev/agentic-iot-pet/issues/4) según el [contrato inicial](../../contracts/PROTOCOLO_INICIAL.md). Se ejecutarán en `:shared:desktopTest` cuando estén disponibles `ProtocolCodec` y `DeviceAuthority`. El estado actual de los casos es **NO EJECUTADA**.
+Estos casos verifican el [issue #4](https://github.com/wmrDev/agentic-iot-pet/issues/4) según el [contrato inicial](../../contracts/PROTOCOLO_INICIAL.md). Se ejecutan en `:shared:desktopTest` con `ProtocolCodec` y `DeviceAuthority`. El [registro de prueba](resultados/2026-11-26-T01-contrato.md) identifica el entorno, la revisión y el resultado observado.
 
 ## Preparación común
 
@@ -16,8 +16,8 @@ Estos casos preparan el [issue #4](https://github.com/wmrDev/agentic-iot-pet/iss
 | `acquireAgainDoesNotExtendLease` | A adquiere en 0 ms y solicita otra adquisición, con ID y secuencia nuevos, en 2.000 ms. | Sigue como propietario en la misma época. Quedan 4.000 ms de permiso. |
 | `leaseExpiresAtExactBoundary` | A adquiere en 0 ms. Consultar estado a los 5.999 ms y pedir `happy` a los 6.000 ms con la época anterior. | La consulta muestra 1 ms restante. La orden se rechaza con `LEASE_EXPIRED`, sin cambiar `idle`. |
 | `renewRetryDoesNotExtendLeaseTwice` | A adquiere en 0 ms y renueva a los 2.000 ms. Repetir exactamente esa renovación a los 3.000 ms. | El reintento devuelve el resultado original. La consulta a los 3.000 ms muestra 5.000 ms restantes y la consulta a los 8.000 ms muestra que venció. |
-| `wallClockDoesNotChangeLeaseOrSession` | Alterar la hora civil de prueba mientras el reloj inyectado conserva el valor en 2.000 ms. Avanzar el reloj monotónico a 6.000 ms. | En T01 el permiso conserva sus 4.000 ms hasta que avance el reloj monotónico y vence a los 6.000 ms. La sesión de estudio se verifica en su propia tarea. |
-| `expressionRetryDoesNotApplyTwice` | A adquiere y pide `happy` por 1.000 ms en t=0. En t=500 ms reenvía el cuerpo exacto. Consultar estado a los 999 ms y a los 1.000 ms. | La primera orden aplica `happy`. Se devuelve la respuesta original en el reintento. A los 999 ms sigue `happy` y a los 1.000 ms vuelve a `idle`, con el plazo original. |
+| `wallClockDoesNotChangeLeaseOrSession` | Iniciar el reloj monotónico inyectado con un origen distinto de cero y avanzar 2.000 ms, luego 4.000 ms más. | El tiempo de actividad es relativo al arranque. Quedan 4.000 ms de permiso en la primera consulta y el permiso vence a los 6.000 ms. La sesión de estudio se verifica en su propia tarea. |
+| `expressionRetryDoesNotApplyTwice` | A adquiere y pide `happy` por 1.000 ms en t=0. Repite en t=500 ms, al vencer el permiso y después de que B adquiera. Consultar estado a los 999 ms y a los 1.000 ms. | La primera orden aplica `happy` y el primer reintento devuelve la respuesta original. A los 999 ms sigue `happy` y a los 1.000 ms vuelve a `idle`. Los dos últimos reintentos se rechazan con `LEASE_EXPIRED` y `STALE_EPOCH`. |
 | `requestWithChangedContentIsRejected` | Aplicar la orden de expresión y repetir su ID con otros parámetros, conservando lo demás. | `ID_CONFLICT`. Permanecen el efecto inicial y su plazo. |
 | `releaseRetryOnlyAppliesUntilNextAcquire` | A adquiere y libera. Repetir la liberación exacta y consultar estado. Después B adquiere y se repite otra vez la liberación antigua de A. | Antes de la adquisición de B, la repetición devuelve el resultado original y el estado sigue sin dueño. Después, el reintento anterior se rechaza y B mantiene la época nueva. |
 | `evictedRetryIsStale` | A adquiere con secuencia 1 y pide `happy` con secuencia 2. En el mismo permiso, emitir 64 adquisiciones nuevas del mismo cliente, secuencias 3 a 66. Avanzar a los 1.000 ms y repetir la orden de secuencia 2. | El estado está en `idle` cuando se reintenta. La respuesta expulsada se rechaza con `STALE_SEQUENCE` y el estado sigue en `idle`. |
@@ -29,7 +29,9 @@ Estos casos preparan el [issue #4](https://github.com/wmrDev/agentic-iot-pet/iss
 | Caso | Entrada | Resultado esperado |
 |---|---|---|
 | `durationIsAnIntegerInRange` | Sobre órdenes nuevas y válidas, probar `100`, `5000`, `99`, `5001`, `"100"` y `true` como `duration_ms`. | Se aceptan los dos límites. Los demás valores generan `INVALID_MESSAGE` y dejan el estado previo. |
-| `malformedRequestsDoNotConsumeSequence` | Desde el ejemplo, probar una clave repetida, un campo extra, una versión distinta y una acción desconocida. Después enviar una orden válida con la misma secuencia. | Los mensajes inválidos se rechazan con `INVALID_MESSAGE`. La secuencia sigue disponible para la solicitud válida. |
+| `rejectsAmbiguousOrUnsupportedMessages` | Desde una orden válida, probar una clave repetida, un campo extra, una versión distinta y una acción desconocida. | Los mensajes inválidos se rechazan con `INVALID_MESSAGE`. |
+| `authorizationAndValidityPrecedeDeduplication` | Enviar una orden fuera de rango, luego la orden válida con la misma secuencia. Repetir la orden válida sin identidad o con la identidad de otro cliente. | La orden válida conserva su secuencia. El reintento sin identidad o con otra identidad se rechaza sin revelar estado. |
 | `requestSizeLimitUsesUtf8Bytes` | Usar el JSON válido del ejemplo y rellenar con espacio JSON hasta 1.024 bytes. En otra instancia, probar 1.025 bytes. | El primer cuerpo llega a la validación. El segundo se rechaza con `MESSAGE_TOO_LARGE` antes de aplicar efectos. |
+| `repositoryExamplesMatchTheSimulatedFlow` | Cargar los ejemplos del repositorio, adquirir permiso a los 1.000 ms y aplicar la orden a los 1.100 ms. | El estado y la respuesta coinciden campo por campo con `state.json` y `reply-expression.json`. |
 
-Al implementar, ejecutar `gradlew.bat :shared:desktopTest` primero con la lógica pendiente para comprobar el fallo pertinente. Repetir después de implementar y guardar el resultado observado según la [plantilla de pruebas](PLANTILLA_RESULTADO.md).
+Para repetir el conjunto, ejecutar `.\gradlew.bat :shared:desktopTest --console=plain` y guardar el resultado observado según la [plantilla de pruebas](PLANTILLA_RESULTADO.md).
