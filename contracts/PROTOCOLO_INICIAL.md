@@ -12,6 +12,8 @@ IDs de cliente, solicitud y arranque: UUID con representación canónica en min�
 
 Órdenes/control: máximo 1.024 bytes por petición. Respuestas de esta primera integración: máximo 4.096 bytes. Rechazar JSON con claves repetidas, tipos incorrectos, propiedades desconocidas y valores fuera de rango. No convertir cadenas a números ni aceptar booleanos como enteros. Las futuras páginas de eventos y capturas de audio tendrán límites separados.
 
+Los campos enteros de la petición se escriben con dígitos decimales, sin signo, fracción ni exponente. Por ejemplo, una duración de `100` es válida, y `100.0` y `1e2` se rechazan. Esta regla de representación se comprueba sobre el cuerpo recibido, junto con los tipos y rangos del esquema.
+
 ## Estado: `GET /v1/state`
 
 Solo clientes autenticados. Respuesta 200 con `version`, `boot_id`, `expression`, `owner_client_id`, `lease_epoch`, `lease_remaining_ms` y `uptime_ms`. `owner_client_id` es null cuando no hay centro; en ese caso `lease_remaining_ms=0`. `lease_epoch` es un contador creciente dentro del arranque, inicialmente 0. `uptime_ms` es monotónico, no una fecha civil.

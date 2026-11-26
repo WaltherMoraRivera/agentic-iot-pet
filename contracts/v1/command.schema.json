@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Pet IoT initial expression command v1",
+  "description": "The v1 wire format requires integer fields to use decimal digits without a sign, fraction, or exponent. The receiver checks this representation in the JSON text.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "request_id", "client_id", "boot_id", "lease_epoch", "sequence", "action", "params"],
