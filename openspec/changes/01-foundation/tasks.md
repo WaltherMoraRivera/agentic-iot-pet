@@ -15,6 +15,7 @@
 ## 3. V01 Lenguaje visual, expresiones y flujos de la interfaz
 - [ ] 3.1 Revisar contrato, dependencias y alcance del issue [#3](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/3).
 - [ ] 3.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
+  - Avance 2026-11-25 (parcial): primer boceto de la cara (estilo B) en `docs/diseno/`. Pendiente: pantallas de conexión, estudio, chat y estado, prueba en OLED y revisión de Walther.
 - [ ] 3.3 Verificar: Diseñar cara 128×64 y pantallas de conexión, estudio, chat y estado; distinguir desconexión, captura y confirmación sin depender solo del color.
 - [ ] 3.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
 
