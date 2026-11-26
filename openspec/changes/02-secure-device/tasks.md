@@ -1,10 +1,11 @@
 # Tasks
 
 ## 1. T01 Contrato y autoridad simulada de control
-- [ ] 1.1 Revisar contrato, dependencias y alcance del issue [#4](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/4).
+- [x] 1.1 Revisar contrato, dependencias y alcance del issue [#4](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/4).
 - [ ] 1.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
 - [ ] 1.3 Verificar: Un solo propietario; expiración a 6000 ms; reintentos sin duplicar efectos; ejemplos válidos e inválidos comprobados.
 - [ ] 1.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
+  - [Casos de prueba preparados](../../../docs/pruebas/T01-contrato.md). Ejecutar en `:shared:desktopTest` al implementar el contrato.
 
 ## 2. T02 Identidad, emparejamiento USB y credenciales
 - [ ] 2.1 Revisar contrato, dependencias y alcance del issue [#5](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/5).
