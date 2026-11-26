@@ -6,7 +6,7 @@ Asistente físico de escritorio con expresiones, contacto, detección de ruido, 
 
 ## Estado real
 
-El diseño inicial fue aprobado el **17 de noviembre de 2026**. Esta base contiene documentación, plan, contratos iniciales y plantillas de colaboración. **Todavía no hay firmware, apps, simulador ni compilación automática implementados.** Los comandos de compilación del plan corresponden a archivos que se crearán en T00.
+El diseño inicial fue aprobado el **17 de noviembre de 2026**. Esta base contiene documentación, plan, contratos iniciales y plantillas de colaboración. Al 25 de noviembre existe un firmware mínimo de diagnóstico (`firmware/`, PRUEBA_USB, T00 entrega 1): **compila para ESP32-S3 y todavía no se ha cargado en la placa**. **No hay apps, simulador ni compilación automática**; esos comandos del plan corresponden al resto de T00. Para continuar: [traspaso](docs/equipo/TRASPASO.md).
 
 Repositorio compartido: https://github.com/WaltherMoraRivera/agentic-iot-pet. La preparación de OpenSpec y GitHub no implementa funciones de producto ni implica llamadas de IA pagadas.
 
@@ -37,7 +37,7 @@ Un repositorio, una rama principal integrable y una rama por tarea. Cada integra
 
 `AGENTS.md` contiene las reglas comunes; `CLAUDE.md` las importa. No necesitan instalar las habilidades particulares del autor del plan: las tareas incluyen sus pasos y verificaciones.
 
-El firmware y los proyectos Gradle se crearán al ejecutar T00 y las siguientes tareas. No se añaden carpetas vacías para aparentar implementación.
+El firmware se amplía y los proyectos Gradle se crearán al completar T00 y las siguientes tareas. No se añaden carpetas vacías para aparentar implementación.
 
 ## Condiciones de funcionamiento
 
