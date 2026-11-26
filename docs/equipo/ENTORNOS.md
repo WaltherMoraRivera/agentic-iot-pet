@@ -10,7 +10,7 @@
 | Android Studio y SDK | Build 262.9437.185.2621.16467767, plataforma 36 rev. 2, Build Tools 35.0.0 y ADB 37.0.1 | Por verificar | Por verificar |
 | ESP-IDF y herramientas | ESP-IDF 5.5.6 instalado. El entorno de shell inicial requiere activación y herramientas de build. | Por verificar | ESP-IDF 5.5.6 en CachyOS, usado en el PR #27 |
 | Teléfono | INFINIX ZERO 30 5G, XOS 14.5.0 | iPhone 14 | Galaxy S24 Ultra |
-| Android real / API level | Por registrar | Por registrar | Por registrar |
+| Versión de Android | Android 14, informado por Walther | No aplica (iOS) | Por registrar |
 
 Inventario revisado el 26 de noviembre. En Windows el SDK está en `%LOCALAPPDATA%\Android\Sdk`. Android Studio permite instalar la plataforma API 36 desde el SDK Manager. Para compilar desde PowerShell, usar el SDK configurado en Android Studio o definir `ANDROID_HOME` en la sesión. Para firmware, activar el entorno de ESP-IDF 5.5.6.
 
