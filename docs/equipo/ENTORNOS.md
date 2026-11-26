@@ -4,15 +4,15 @@
 
 | Dato | Walther | Maximiliano | Winderson |
 |---|---|---|---|
-| Sistema y versión exacta | Windows; versión por registrar | Windows; versión por registrar | Linux y Windows; versiones por registrar |
+| Sistema y versión exacta | Windows 25H2, build 26200.9974 | Windows; versión por registrar | Linux y Windows; versiones por registrar |
 | Git | Detectado en PATH | Por verificar | Por verificar |
-| JDK | Detectado JDK 17 en PATH; no validado con el proyecto | Por verificar | Por verificar |
-| Android Studio y SDK | Por verificar | Por verificar | Por verificar |
-| ESP-IDF y herramientas | No encontrados en PATH; instalación no descartada | Por verificar | Por verificar |
-| Teléfono | INFINIX ZERO 30 5G, XOS 14.5.0 | Por identificar | Por identificar |
+| JDK | Microsoft OpenJDK 17.0.20.1 | Por verificar | Por verificar |
+| Android Studio y SDK | Build 262.9437.185.2621.16467767, plataforma 36 rev. 2, Build Tools 35.0.0 y ADB 37.0.1 | Por verificar | Por verificar |
+| ESP-IDF y herramientas | ESP-IDF 5.5.6 instalado. El entorno de shell inicial requiere activación y herramientas de build. | Por verificar | ESP-IDF 5.5.6 en CachyOS, usado en el PR #27 |
+| Teléfono | INFINIX ZERO 30 5G, XOS 14.5.0 | iPhone 14 | Galaxy S24 Ultra |
 | Android real / API level | Por registrar | Por registrar | Por registrar |
 
-El inventario de Walther es una inspección parcial del 17 de noviembre. `adb`, `idf.py`, CMake, Ninja y Gradle no se encontraron en PATH; pueden existir dentro de instalaciones del IDE. Python está disponible, pero no se usará su versión global para sustituir el entorno compatible que instala ESP-IDF.
+Inventario revisado el 26 de noviembre. En Windows el SDK está en `%LOCALAPPDATA%\Android\Sdk`. Android Studio permite instalar la plataforma API 36 desde el SDK Manager. Para compilar desde PowerShell, usar el SDK configurado en Android Studio o definir `ANDROID_HOME` en la sesión. Para firmware, activar el entorno de ESP-IDF 5.5.6.
 
 ## Preparación por rol
 
@@ -29,19 +29,19 @@ T00 completará esta tabla con versiones exactas probadas y comandos observados,
 
 | Componente | Versión validada / evidencia |
 |---|---|
-| JDK y Android Studio | A registrar en T00 |
-| Gradle Wrapper, plugins Android y Kotlin | A registrar en T00 |
-| Compose Multiplatform | A registrar en T00 |
-| Android minSdk / compileSdk / targetSdk | A fijar con dispositivos reales y dependencias |
+| JDK y Android Studio | Microsoft OpenJDK 17.0.20.1 y Android Studio instalado en Windows |
+| Gradle Wrapper, plugins Android y Kotlin | Gradle 8.13, AGP 8.11.1, Kotlin 2.2.21 |
+| Compose Multiplatform | Compose 1.9.3 y Material 3 1.9.0 |
+| Android minSdk / compileSdk / targetSdk | 24 / 36 / 36. La instalación en teléfonos reales se verifica por separado. |
 | ESP-IDF y toolchain | A registrar en T00 |
 | Room, SQLite y KSP | A fijar en T05 con prueba Android/Windows |
 | Sistema Windows de referencia | A registrar en T00 |
 
-No hay versiones de producto validadas en este momento. El JDK detectado no obliga a elegirlo si la combinación seleccionada requiere otro compatible.
+La compilación local produjo la APK de depuración y el código de escritorio. El workflow de Gradle está preparado y su ejecución en GitHub queda pendiente.
 
-## Comandos previstos después de T00
+## Comandos de T00
 
-Se ejecutan desde la raíz, salvo firmware. **Todavía no existen los wrappers ni estos proyectos; no ejecutar como si esta preparación ya compilara.**
+Se ejecutan desde la raíz, salvo firmware. El build de ESP32-S3 requiere el checkout que contiene el diagnóstico del PR #27.
 
 | Objetivo | Windows / PowerShell | Linux |
 |---|---|---|
