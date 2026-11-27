@@ -3,8 +3,9 @@
 #include <stdbool.h>
 
 // Validates that a configured pin can be used by the bench on ESP32-S3.
-// Rejects -1 (not configured), pins that do not exist and the USB pins
-// used by the console. Logs the reason using `label`.
+// Rejects -1 (not configured), pins that do not exist, the USB pins used by
+// the console and GPIO26-32 (in-package flash/PSRAM). Warns about GPIO33-37
+// (octal PSRAM) and strapping pins. Logs the reason using `label`.
 bool bench_pin_ok(int gpio, const char *label);
 
 // Validates several pins and that none of them repeats.

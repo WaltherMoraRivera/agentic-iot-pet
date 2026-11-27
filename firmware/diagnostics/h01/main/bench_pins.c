@@ -13,6 +13,20 @@ static bool is_usb_pin(int gpio)
     return gpio == 19 || gpio == 20;
 }
 
+// GPIO26-32 connect to the in-package flash and PSRAM on the ESP32-S3
+// SuperMini; driving them crashes the chip.
+static bool is_flash_pin(int gpio)
+{
+    return gpio >= 26 && gpio <= 32;
+}
+
+// GPIO33-37 are taken only by octal PSRAM. The inventory reports 2 MB of
+// PSRAM, which is quad, so they are free, but the module variant is checked.
+static bool is_octal_psram_pin(int gpio)
+{
+    return gpio >= 33 && gpio <= 37;
+}
+
 // Strapping pins can change the boot mode if a module pulls them.
 static bool is_strapping_pin(int gpio)
 {
@@ -33,6 +47,14 @@ bool bench_pin_ok(int gpio, const char *label)
     if (is_usb_pin(gpio)) {
         ESP_LOGE(TAG, "%s: GPIO%d is used by the USB console.", label, gpio);
         return false;
+    }
+    if (is_flash_pin(gpio)) {
+        ESP_LOGE(TAG, "%s: GPIO%d is used by the in-package flash/PSRAM.", label, gpio);
+        return false;
+    }
+    if (is_octal_psram_pin(gpio)) {
+        ESP_LOGW(TAG, "%s: GPIO%d is reserved if the module has octal PSRAM; check the variant.",
+                 label, gpio);
     }
     if (is_strapping_pin(gpio)) {
         ESP_LOGW(TAG, "%s: GPIO%d is a strapping pin; check boot with the module connected.",

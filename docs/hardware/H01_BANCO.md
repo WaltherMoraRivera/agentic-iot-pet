@@ -2,7 +2,15 @@
 
 Procedimiento para [#7 H01](https://github.com/wmrDev/agentic-iot-pet/issues/7). El firmware de banco está en `firmware/diagnostics/h01/` y prueba **un módulo por carga**, como pide H01. No es firmware de producto.
 
-**Ningún GPIO viene configurado.** Cada pin empieza en `-1` y la prueba no arranca hasta que se configura el pin verificado en la placa real. El firmware rechaza GPIO19 y GPIO20, que usa la consola USB, y avisa si se elige un pin de arranque (0, 3, 45 o 46).
+**Ningún GPIO viene configurado.** Cada pin empieza en `-1` y la prueba no arranca hasta que se configura el pin verificado en la placa real. El firmware rechaza:
+
+- GPIO19 y GPIO20, que usa la consola USB;
+- GPIO26 a GPIO32, conectados a la flash y la PSRAM internas del encapsulado.
+
+Además avisa, sin bloquear la prueba, en estos casos:
+
+- GPIO33 a GPIO37: quedan reservados si el módulo tiene PSRAM octal. El [inventario](INVENTARIO.md) informa 2 MB de PSRAM, que es cuádruple, así que deberían estar libres; confirmar la variante antes de usarlos.
+- Pines de arranque (0, 3, 45 o 46). Evitar GPIO45 y GPIO46 salvo que no quede otra opción: un módulo que los fuerce al arrancar cambia la tensión de la flash (GPIO45) o el modo de arranque (GPIO46).
 
 ## Antes de energizar
 
