@@ -35,7 +35,7 @@ Repositorio compartido: https://github.com/wmrDev/agentic-iot-pet. La preparaci�
 
 ## Organizaci처n
 
-Un repositorio, una rama principal integrable y una rama por tarea. Cada integrante trabaja en su clon, con revisi처n por otra persona. Placa, aplicaci처n y prueba forman parte de la misma entrega.
+Un repositorio, una rama principal integrable y una rama por tarea. Cada integrante trabaja en su clon; cada PR lleva una revisi처n de c처digo registrada, que puede hacer un agente, y nombra su issue con `Closes #N` o `Parte de #N`. Placa, aplicaci처n y prueba forman parte de la misma entrega.
 
 `AGENTS.md` contiene las reglas comunes; `CLAUDE.md` las importa. No necesitan instalar las habilidades particulares del autor del plan: las tareas incluyen sus pasos y verificaciones.
 
