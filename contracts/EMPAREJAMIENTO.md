@@ -1,6 +1,6 @@
 # Contrato de emparejamiento — versión 1
 
-**Estado: propuesta, pendiente de aprobación del equipo.** Lo propone T02 ([issue #5](https://github.com/wmrDev/agentic-iot-pet/issues/5)) para responder las diez preguntas abiertas de [T02-casos.md](../docs/pruebas/T02-casos.md). Ninguna ruta, trama USB ni almacenamiento descrito aquí existe todavía en la placa, el simulador ni las apps. Nada de este documento se considera acordado hasta que el equipo lo apruebe y se registre en [DECISIONES.md](../docs/equipo/DECISIONES.md).
+**Estado: aprobado por Walther el 27-11-2026 ([D12](../docs/equipo/DECISIONES.md)).** Responde las diez preguntas abiertas de T02 ([issue #5](https://github.com/wmrDev/agentic-iot-pet/issues/5) y [T02-casos.md](../docs/pruebas/T02-casos.md)). Ninguna ruta, trama USB ni almacenamiento descrito aquí existe todavía en la placa, el simulador ni las apps. Lo que depende de mediciones (costo de ECDSA P-256, memoria para 4 clientes y gesto de restablecimiento) se confirma en T02/T03 y H01; si una medición obliga a cambiar algo, se registra como decisión nueva.
 
 Extiende el [contrato v1](PROTOCOLO_INICIAL.md) sin cambiar lo ya fijado: HTTPS, JSON UTF-8, UUID canónicos en minúsculas, análisis estricto, representación de enteros, límites de tamaño, orden de validación, idempotencia y códigos de error. Solo se describe lo nuevo. Deriva de la sección 8 del [diseño](../docs/superpowers/specs/2026-11-17-diseno-software.md), de D05 y del paso 1 de T02 en el [plan](../docs/superpowers/plans/2026-11-17-desarrollo-integrado.md).
 
@@ -8,10 +8,10 @@ Extiende el [contrato v1](PROTOCOLO_INICIAL.md) sin cambiar lo ya fijado: HTTPS,
 
 1. **Modo de aprovisionamiento.** Se activa solo al arrancar la placa sosteniendo el TTP223 (paso 3 de T02). No existe orden remota, por red ni por USB, para entrar en él. Dura hasta 300 000 ms de reloj monotónico o hasta el siguiente reinicio.
 2. **Identidad.** La primera vez, la placa genera localmente su par de claves TLS, un certificado autofirmado y su `device_id`. La clave privada nunca sale de la placa.
-3. **Primera app (USB).** El asistente de escritorio (`UsbProvisioner`) lee por USB la identidad, configura la red y pide una oferta. Muestra la oferta como QR para Android, o la usa directamente si la primera app es la de Windows.
+3. **Primera app (USB).** Solo si la placa no tiene clientes registrados: la primera vez o después de un restablecimiento físico (D05). El asistente de escritorio (`UsbProvisioner`) lee por USB la identidad, configura la red y pide una oferta. Muestra la oferta como QR para Android, o la usa directamente si la primera app es la de Windows.
 4. **Alta.** La app verifica la huella durante el handshake TLS, antes de enviar un solo byte de aplicación. Luego envía `POST /v1/pair` con el secreto. La placa reserva la oferta y espera un toque físico. La app repite la misma petición hasta recibir la credencial o un rechazo.
-5. **Clientes siguientes.** Un cliente ya emparejado pide una oferta con `POST /v1/pair/offers` y la muestra como QR. El cliente nuevo sigue el paso 4. Siempre se exige el toque.
-6. **Revocación y recuperación.** Cualquier cliente emparejado puede revocar a cualquier cliente con `POST /v1/clients/revoke`. El restablecimiento físico borra toda la confianza.
+5. **Clientes siguientes.** Un cliente ya emparejado pide una oferta con `POST /v1/pair/offers` y la muestra como QR. El cliente nuevo sigue el paso 4. Siempre se exige el toque. Es la única vía para agregar clientes mientras haya alguno registrado (D05).
+6. **Revocación y recuperación.** Con `POST /v1/clients/revoke`, un cliente se revoca a sí mismo sin toque; revocar a otro cliente exige el toque físico. El restablecimiento físico borra toda la confianza.
 
 La placa es la única que emite y valida secretos de alta y credenciales. Las apps nunca generan secretos aceptables por la placa.
 
@@ -88,7 +88,7 @@ Cada trama es una línea que empieza por `@pp1 ` seguida de un objeto JSON y un 
 |---|---|---|
 | `hello` | Ninguno | `device_id`, `fingerprint`, `port` y `host` (null mientras no haya red) |
 | `wifi.set` | `ssid` (1–32 bytes), `password` (8–63 bytes, WPA2-PSK) | `host` obtenido, o rechazo `WIFI_FAILED` |
-| `offer.create` | `client_kind` | `offer`, con la forma de la sección anterior |
+| `offer.create` | `client_kind` | `offer`, con la forma de la sección anterior. Si ya hay clientes registrados, rechazo `ALREADY_PAIRED` sin emitir oferta |
 
 Toda trama de petición lleva `version: 1`, `op` y `request_id`. Las respuestas llevan `version`, `op`, `request_id`, `status` (`applied` o `rejected`) y `code`. Fuera del modo de aprovisionamiento, cualquier trama se rechaza con `PROVISIONING_INACTIVE`, sin efectos. Las redes abiertas sin contraseña quedan fuera de la versión 1.
 
@@ -177,9 +177,12 @@ Requiere un cliente autenticado. Respuesta 200:
 
 ### `POST /v1/clients/revoke`
 
-Requiere un cliente autenticado. Cualquier cliente emparejado puede revocarse a sí mismo o a otro. No requiere permiso de control ni toque.
+Requiere un cliente autenticado. No requiere permiso de control.
 
 Petición: `version`, `request_id`, `client_id`, `boot_id`, `sequence` y `target_client_id` (UUID). Respuesta con la forma de control del contrato v1: `status`, `state` y `code`. Un `target_client_id` no registrado se rechaza con 409 `UNKNOWN_CLIENT`.
+
+- **Autorrevocación** (`target_client_id` igual a `client_id`): se aplica de inmediato, sin toque.
+- **Revocar a otro cliente:** exige el toque físico, con la misma ventana de 15 000 ms y el mismo espacio de confirmación que el alta. La placa reserva la confirmación y responde 202 con `status: "pending_confirmation"` y `confirmation: {"expires_in_ms": <restante>}`. El cliente repite la petición exacta cada 1 000 ms. Toque válido: se aplica y responde 200. Ventana vencida: 409 `CONFIRMATION_EXPIRED`, sin efectos. Otra confirmación pendiente: 409 `CONFIRMATION_BUSY`. Mientras espera, no consume secuencia nueva: las repeticiones son la misma petición.
 
 Efectos atómicos al aplicar:
 
@@ -192,8 +195,8 @@ Si un cliente se revoca a sí mismo y pierde la respuesta, la repetición recibe
 
 ## Aprovisionamiento con clientes ya emparejados y restablecimiento
 
-- Entrar de nuevo en modo de aprovisionamiento no borra clientes. Permite cambiar la red y emitir una oferta que **añade** un cliente, con el mismo toque y el mismo límite de 4.
-- Para quitar clientes se usa la revocación o el restablecimiento físico.
+- Entrar de nuevo en modo de aprovisionamiento no borra clientes. Con clientes registrados permite `hello` y `wifi.set` (cambiar de red), pero `offer.create` se rechaza con `ALREADY_PAIRED`. Los clientes siguientes se agregan solo con una oferta de un cliente ya emparejado y el toque (D05).
+- Para quitar clientes se usa la revocación o el restablecimiento físico. Si se perdieron todos los clientes, el restablecimiento físico es la vía de recuperación: después, el USB vuelve a emparejar al primero.
 - El restablecimiento físico borra credenciales, red, clave TLS, certificado y `device_id`, y la placa vuelve a exigir aprovisionamiento USB. Las apps que guardaban la identidad anterior fallan en el handshake por huella distinta y deben emparejarse de nuevo. El gesto exacto se fija con las mediciones del TTP223 de H01; debe ser distinto del de arranque en aprovisionamiento y nunca puede pedirse por red ni por USB.
 
 ## Errores
@@ -213,6 +216,7 @@ Códigos nuevos:
 | 500 | `STORAGE_FAILED` | No se pudo guardar el registro del cliente; no hubo alta |
 | USB | `PROVISIONING_INACTIVE` | Trama USB fuera del modo de aprovisionamiento |
 | USB | `WIFI_FAILED` | La placa no pudo unirse a la red indicada |
+| USB | `ALREADY_PAIRED` | Hay clientes registrados; las altas nuevas van por `POST /v1/pair/offers` |
 
 ## Nunca se registra
 
@@ -241,17 +245,21 @@ Se pueden registrar `device_id`, `fingerprint`, `client_id`, `client_kind`, `req
 
 **7. Credencial e identidad del cliente.** Decisión propuesta: token portador por cliente sobre HTTPS con huella fijada; `client_id` lo genera la placa; `client_kind` lo fija quien emite la oferta y lo confirma el toque; máximo 4 clientes. El contrato v1 ya usa `Authorization: Bearer`, la revocación es borrar un hash y no requiere que la placa verifique certificados de cliente ni que las apps generen claves de cliente. Alternativa descartada: TLS mutuo, con más memoria y trabajo por handshake en el ESP32-S3, generación de claves de cliente en Keystore y Windows, y un simulador más complejo, sin una mejora proporcional para una red local con huella fijada.
 
-**8. Revocación.** Decisión propuesta: `POST /v1/clients/revoke`, cualquier cliente emparejado sobre cualquiera, sin toque; el permiso de control del revocado termina como una liberación; los demás lo ven en `GET /v1/clients` y `GET /v1/state`. Revocar solo quita confianza, así que el peor abuso es negar servicio, recuperable por USB o restablecimiento físico. Alternativa descartada: exigir toque para revocar a otro, que impediría quitar a tiempo un teléfono perdido.
+**8. Revocación.** Decisión aprobada (D12): `POST /v1/clients/revoke`; autorrevocación sin toque y revocación de otro cliente con toque físico; el permiso de control del revocado termina como una liberación; los demás lo ven en `GET /v1/clients` y `GET /v1/state`. Exigir el toque impide que un cliente deje fuera a los demás a distancia; un teléfono perdido se revoca desde otro cliente con alguien junto a la placa. Alternativa descartada: cualquier cliente revoca a cualquiera sin toque, que abre una negación de servicio remota.
 
 **9. Presentación del secreto.** Decisión propuesta: en el cuerpo de `POST /v1/pair`, con `Authorization` prohibido en esa ruta. El encabezado queda reservado a credenciales de cliente; por eso T02-18 comprueba 401 en las otras rutas y la capa de autenticación nunca ve el secreto. Alternativa descartada: un esquema `Authorization: Pairing <secreto>`, que añade otro camino de autenticación y otro encabezado sensible que filtrar en registros.
 
-**10. Reaprovisionamiento USB.** Decisión propuesta: con clientes ya emparejados, el modo de aprovisionamiento cambia la red y puede añadir un cliente con toque, sin reemplazar ni borrar; quitar exige revocación o restablecimiento físico. Quien puede arrancar la placa sosteniendo el sensor ya podría restablecerla, así que no se pierde seguridad. Alternativa descartada: exigir restablecimiento previo, que obligaría a reemparejar todo solo para cambiar de red.
+**10. Reaprovisionamiento USB.** Decisión aprobada (D12): con clientes ya emparejados, el modo de aprovisionamiento solo cambia la red; no emite ofertas (`ALREADY_PAIRED`). Las altas siguientes exigen la confianza de un cliente emparejado más el toque, como fija D05. Cambiar de red no obliga a reemparejar. Alternativa descartada: que el USB más el toque agregue clientes sin autorización de los existentes, que contradice D05.
 
-## Decisiones que el equipo debe confirmar expresamente
+## Decisiones aprobadas (D12) y pendientes
 
-- La identidad del servidor se valida **solo** por huella de clave, sin autoridad ni nombre de host. No es desactivar TLS, pero el revisor debe comprobar que la implementación no se convierta en un "aceptar todo".
-- Cualquier cliente emparejado puede revocar a otro sin toque.
-- El modo de aprovisionamiento puede añadir clientes sin que los existentes lo autoricen, con presencia física.
+Aprobado por Walther el 27-11-2026:
+
+- La identidad del servidor se valida **solo** por huella de clave, sin autoridad ni nombre de host. No es desactivar TLS; la revisión de la implementación debe comprobar que no se convierta en un "aceptar todo".
+- Autorrevocación sin toque; revocar a otro cliente exige el toque.
+- El USB empareja solo al primer cliente, o al primero tras un restablecimiento; con clientes registrados solo cambia la red (D05).
 - Máximo de 4 clientes y retención de 30 000 ms de la credencial en RAM para repeticiones.
+- Rutas nuevas `POST /v1/pair/offers`, `GET /v1/clients` y `POST /v1/clients/revoke`, y la excepción acotada de idempotencia en la emisión de ofertas.
 - Las tramas USB transportan el secreto y la contraseña WiFi por el mismo puerto que el registro serie; la prueba T02-21 debe buscar valores sintéticos fuera de las tramas `@pp1`.
-- El gesto de restablecimiento físico y la duración del sostenido de arranque quedan pendientes de H01.
+
+Pendiente de medición: gesto de restablecimiento y duración del sostenido de arranque (H01), costo de ECDSA P-256 y memoria para 4 clientes (T02/T03).

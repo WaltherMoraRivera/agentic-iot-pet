@@ -10,7 +10,7 @@
 ## 2. T02 Identidad, emparejamiento USB y credenciales
 - [ ] 2.1 Revisar contrato, dependencias y alcance del issue [#5](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/5).
 - [ ] 2.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
-  - [Contrato propuesto](../../../contracts/EMPAREJAMIENTO.md): flujo USB y oferta, `POST /v1/pair`, revocación, errores y decisión propuesta para las 10 preguntas de los casos. Pendiente de aprobación del equipo; sin implementación.
+  - [Contrato de emparejamiento](../../../contracts/EMPAREJAMIENTO.md) aprobado el 27-11-2026 (D12): flujo USB y oferta, `POST /v1/pair`, revocación y errores; responde las 10 preguntas de los casos. Paso 1 de T02 hecho; sin implementación.
 - [ ] 2.3 Verificar: Primera app autorizada con identidad verificada; QR vencido/reutilizado y cliente revocado rechazados; no se desactiva TLS.
 - [ ] 2.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
   - [Casos preparados sin placa](../../../docs/pruebas/T02-casos.md): 25 casos planificados (17 compartidos, 1 manual en Android, 3 de simulador y 4 de placa) y preguntas abiertas del contrato. Sin implementación ni resultados.
