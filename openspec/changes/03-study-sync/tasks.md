@@ -3,6 +3,7 @@
 ## 1. T04 Mascota autónoma, temporizador, gestos y sonidos
 - [ ] 1.1 Revisar contrato, dependencias y alcance del issue [#8](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/8).
 - [ ] 1.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
+  - Parcial: firmware local completo en `firmware/main/` (sesión, gestos, confirmación, modo de aviso, reacción acústica, telemetría, configuración en NVS, TTP223, INMP441, LED, MAX98357A con sonidos propios y ciclo principal) y 61 tests Unity en `firmware/test/`. La compilación tras las correcciones de revisión del PR #36 está pendiente de verificar; no se ha ejecutado en la placa. Contrato propuesto en `contracts/ESTUDIO_Y_EVENTOS.md`. Faltan la API (T03), la parte Kotlin y las pruebas de `docs/pruebas/T04_PLACA.md`.
 - [ ] 1.3 Verificar: Sesión continúa sin red; audio no genera bucle acústico; gestos y confirmaciones producen un solo efecto; montaje y consumo documentados.
 - [ ] 1.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
 
