@@ -41,7 +41,7 @@ No hay versiones de producto validadas en hardware en este momento. El JDK detec
 
 ## Comandos previstos después de T00
 
-Se ejecutan desde la raíz, salvo firmware. **Todavía no existen los wrappers ni los proyectos Gradle; solo `idf.py build` funciona hoy.**
+Se ejecutan desde la raíz, salvo firmware. **Todavía no existen los wrappers ni los proyectos Gradle; solo `idf.py build` funciona hoy, verificado únicamente en el Linux (CachyOS) de Winderson, con el código de `424032f`; en Windows sigue pendiente.**
 
 | Objetivo | Windows / PowerShell | Linux |
 |---|---|---|
