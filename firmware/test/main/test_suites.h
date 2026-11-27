@@ -5,3 +5,4 @@
 void run_sound_reaction_tests(void);
 void run_telemetry_tests(void);
 void run_settings_tests(void);
+void run_pin_tests(void);

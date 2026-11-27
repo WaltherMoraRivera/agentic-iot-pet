@@ -1,6 +1,8 @@
 menu "Pet hardware"
 
     comment "GPIO -1 means not connected: set only pins verified in the H01 bench"
+    comment "Rejected at boot: 19/20 (USB), 26-32 (flash/PSRAM), 22-25 and repeated pins"
+    comment "Strapping pins 0, 3, 45 and 46 are accepted with a warning"
 
     config PET_TOUCH_GPIO
         int "TTP223 I/O GPIO"

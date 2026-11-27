@@ -27,5 +27,7 @@ void sensors_set_led(bool on);
 // Samples are only used to compute the level; they are never stored.
 bool sensors_take_sound_level(float *level);
 
-// True if the pin can be used: exists, is not a USB console pin. Logs why not.
+// True if the pin can be used: exists, is not reserved (19/20 USB console,
+// 26-32 flash/PSRAM) and is not assigned to another signal in menuconfig.
+// Strapping pins are accepted with a warning. Logs why a pin is rejected.
 bool sensors_pin_usable(int gpio, const char *label);

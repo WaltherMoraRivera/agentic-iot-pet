@@ -526,5 +526,6 @@ void app_main(void)
     run_sound_reaction_tests();
     run_telemetry_tests();
     run_settings_tests();
+    run_pin_tests();
     UNITY_END();
 }

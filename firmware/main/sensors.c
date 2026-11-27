@@ -8,6 +8,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
+#include "pin_check.h"
 #include "sdkconfig.h"
 
 static const char *const TAG = "PET_SENSORS";
@@ -16,10 +17,20 @@ static const char *const TAG = "PET_SENSORS";
 #define MIC_WINDOW_SAMPLES (MIC_SAMPLE_RATE_HZ / 10) // 100 ms
 #define MIC_CHUNK_SAMPLES 256
 #define MIC_FULL_SCALE_24 8388608.0
+#define MIC_ERROR_RETRY_MS 10
 
 static sensors_available_t s_available;
 static QueueHandle_t s_level_queue;
 static i2s_chan_handle_t s_mic;
+static uint32_t s_mic_read_errors; // immediate read errors since boot (not timeouts)
+
+// Every pin set in menuconfig, so that a pin assigned to two signals is
+// rejected for both.
+static const int s_configured_pins[] = {
+    CONFIG_PET_TOUCH_GPIO,     CONFIG_PET_LED_GPIO,      CONFIG_PET_MIC_BCLK_GPIO,
+    CONFIG_PET_MIC_WS_GPIO,    CONFIG_PET_MIC_DIN_GPIO,  CONFIG_PET_AMP_BCLK_GPIO,
+    CONFIG_PET_AMP_LRC_GPIO,   CONFIG_PET_AMP_DIN_GPIO,
+};
 
 static uint64_t pin_mask(int gpio)
 {
@@ -28,17 +39,28 @@ static uint64_t pin_mask(int gpio)
 
 bool sensors_pin_usable(int gpio, const char *label)
 {
-    if (gpio < 0) {
+    const size_t count = sizeof(s_configured_pins) / sizeof(s_configured_pins[0]);
+    switch (pin_check(gpio, s_configured_pins, count)) {
+    case PIN_DISABLED:
         ESP_LOGW(TAG, "%s not connected (pin -1)", label);
         return false;
-    }
-    if (!GPIO_IS_VALID_GPIO(gpio)) {
+    case PIN_ERR_INVALID:
         ESP_LOGE(TAG, "%s: GPIO%d does not exist", label, gpio);
         return false;
-    }
-    if (gpio == 19 || gpio == 20) {
-        ESP_LOGE(TAG, "%s: GPIO%d is the USB console", label, gpio);
+    case PIN_ERR_RESERVED:
+        ESP_LOGE(TAG, "%s: GPIO%d is reserved (19/20 USB console, 26-32 flash/PSRAM)", label,
+                 gpio);
         return false;
+    case PIN_ERR_DUPLICATE:
+        ESP_LOGE(TAG, "%s: GPIO%d is assigned to more than one signal", label, gpio);
+        return false;
+    case PIN_OK:
+    default:
+        break;
+    }
+    if (pin_is_strapping(gpio)) {
+        ESP_LOGW(TAG, "%s: GPIO%d is a strapping pin; check it is not driven at reset", label,
+                 gpio);
     }
     return true;
 }
@@ -91,7 +113,19 @@ static void mic_task(void *arg)
         int taken = 0;
         while (taken < MIC_WINDOW_SAMPLES) {
             size_t bytes = 0;
-            if (i2s_channel_read(s_mic, chunk, sizeof(chunk), &bytes, 1000) != ESP_OK) {
+            const esp_err_t err = i2s_channel_read(s_mic, chunk, sizeof(chunk), &bytes, 1000);
+            if (err == ESP_ERR_TIMEOUT) {
+                continue; // the read already blocked for its timeout
+            }
+            if (err != ESP_OK) {
+                // An immediate error would make this loop spin and starve the
+                // idle task (task WDT): wait before retrying and log only once.
+                if (s_mic_read_errors++ == 0) {
+                    ESP_LOGE(TAG, "Microphone read failed: %s; retrying every %d ms",
+                             esp_err_to_name(err), MIC_ERROR_RETRY_MS);
+                }
+                const TickType_t wait = pdMS_TO_TICKS(MIC_ERROR_RETRY_MS);
+                vTaskDelay(wait > 0 ? wait : 1);
                 continue;
             }
             int n = (int)(bytes / sizeof(chunk[0]));
