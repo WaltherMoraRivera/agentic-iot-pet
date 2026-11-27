@@ -9,10 +9,14 @@ Las operaciones de umbral, aviso y confirmación las define T04 (#8). Los nombre
 ## Preparación común
 
 - Red local propia (router o hotspot) sin otros dispositivos ajenos; anotar banda y si es hotspot de qué teléfono.
-- Placa alimentada por USB desde la fuente 5 V / 3 A del inventario, no desde el puerto del PC, salvo en E12.
-- Monitor serie del firmware abierto en el PC y guardado a archivo (`idf.py -p <puerto> monitor | tee <archivo>.log` o equivalente), para correlacionar con Android.
+- **Alimentación y log comparten el único USB-C de la SuperMini.** Ese conector lleva la alimentación y la consola USB Serial/JTAG, así que no es posible alimentar desde una fuente externa de 5 V y ver a la vez el log serie en el PC sin un adaptador UART en pines todavía no verificados. Por eso:
+  - En las sesiones con log, alimentar desde el puerto del PC o desde un hub USB alimentado, opcionalmente con un medidor USB en línea que deje pasar datos.
+  - Si se necesita alimentación externa (por ejemplo, la fuente USB-C 5 V / 3 A, que según el [inventario](../../hardware/INVENTARIO.md) está **por adquirir**), hacerlo en una sesión separada sin log serie y registrar qué evidencia sustituye al log.
+  - Anotar siempre en el registro la fuente real usada (puerto del PC, hub alimentado con su modelo, o fuente externa) y si había log.
+- Monitor serie del firmware abierto en el PC y guardado a archivo (`idf.py -p <puerto> monitor | tee <archivo>.log` o equivalente), para correlacionar con Android, en las sesiones con log.
 - Reloj de referencia: anotar la hora del PC al iniciar el log y la hora mostrada por cada teléfono, para alinear eventos.
 - Credenciales y certificados de prueba generados para el ensayo, fuera de Git (ver contrato, «Transporte e identidad»).
+- Cada ficha declara su **entorno** (banco, simulado o integrado), que se copia al campo «Entorno» de la [plantilla](../PLANTILLA_RESULTADO.md). Banco e integrado son ejecuciones físicas; simulado usa el simulador o un proveedor simulado. Nunca se mezclan en un mismo registro.
 
 ---
 
@@ -20,6 +24,7 @@ Las operaciones de umbral, aviso y confirmación las define T04 (#8). Los nombre
 
 - **Matriz / issue:** A04 parcial · #1, #18.
 - **Objetivo:** demostrar que ambos Android ejecutan la misma APK y registrar su entorno.
+- **Entorno:** físico, solo Android y PC; no usa la placa. Se registra aparte de los casos integrados.
 - **Precondiciones:** APK generada desde un commit identificado; SHA-256 calculado en el PC (`certutil -hashfile <apk> SHA256` en Windows).
 - **Pasos:**
   1. Registrar en [DISPOSITIVOS.md](DISPOSITIVOS.md) fabricante, modelo, versión de Android, nivel de API, arquitectura y parche de seguridad de cada teléfono.
@@ -36,6 +41,7 @@ Las operaciones de umbral, aviso y confirmación las define T04 (#8). Los nombre
 
 - **Matriz / issue:** P04 parcial · #5, #9, #10.
 - **Objetivo:** acceso con la credencial correcta y rechazo sin filtrar datos.
+- **Entorno:** integrado (Android real con la ESP32-S3 real). Una repetición contra el simulador se registra aparte como simulada.
 - **Pasos:**
   1. Abrir la app sin sesión y comprobar que no muestra estado ni lecturas de la placa.
   2. Introducir una contraseña incorrecta tres veces; anotar mensaje, tiempo de respuesta y si hay espera o bloqueo.
@@ -48,8 +54,9 @@ Las operaciones de umbral, aviso y confirmación las define T04 (#8). Los nombre
 
 ## E03 · Lectura actual y lectura guardada
 
-- **Matriz / issue:** P16 parcial · #6, #9.
+- **Matriz / issue:** P02 parcial (estímulos de contacto y ruido controlado); la comparación de lectura actual y guardada no tiene ID propio en la [matriz](../MATRIZ.md) · #6, #9.
 - **Objetivo:** la app muestra la lectura vigente y el historial guardado coincide con lo emitido por la placa.
+- **Entorno:** integrado (Android real con la ESP32-S3 real). Una repetición contra el simulador se registra aparte como simulada.
 - **Pasos:**
   1. Con sesión iniciada, generar estímulos conocidos: tocar el TTP223 cinco veces y producir ruido controlado (palmada a distancia fija, anotada) tres veces.
   2. Anotar hora y valor mostrados en la app para cada estímulo.
@@ -64,6 +71,7 @@ Las operaciones de umbral, aviso y confirmación las define T04 (#8). Los nombre
 
 - **Matriz / issue:** P03 · #6, #8.
 - **Objetivo:** cambiar el umbral con validación de rango y ver el estado aplicado.
+- **Entorno:** integrado (Android real con la ESP32-S3 real). Una repetición contra el simulador se registra aparte como simulada.
 - **Rango de referencia (T04):** intensidad relativa normalizada; umbral válido `(0, 1]`, histéresis inicial 0,05. No etiquetar valores como dB.
 - **Pasos:**
   1. Anotar el umbral actual mostrado por la app y el que reporta la placa en el log.
@@ -79,12 +87,13 @@ Las operaciones de umbral, aviso y confirmación las define T04 (#8). Los nombre
 
 - **Matriz / issue:** P12 parcial · #8.
 - **Objetivo:** solo la confirmación vigente de la operación actual produce un efecto.
+- **Entorno:** integrado (Android real con la ESP32-S3 real). Una repetición contra el simulador se registra aparte como simulada.
 - **Referencia (T04):** `Confirmation` dura 15 000 ms; estados `pending/applied/cancelled`.
 - **Pasos:**
   1. Solicitar desde la app un cambio protegido (umbral o aviso).
   2. **Caso A:** tocar el TTP223 dentro del plazo. Esperado: `applied`, un solo efecto.
   3. **Caso B:** no tocar; cronometrar. Esperado: `cancelled` al vencer, sin efecto.
-  4. **Caso C:** tocar dos veces seguidas dentro del plazo. Esperado: un solo efecto.
+  4. **Caso C:** con una sesión de estudio en curso, tocar dos veces seguidas dentro del plazo. Esperado: un solo efecto y la sesión de estudio **no** queda pausada, aunque el doble toque sea el gesto de pausa. Anotar el estado de la sesión antes y después.
   5. **Caso D:** mantener el toque desde antes de solicitar. Esperado: no confirma hasta soltar y tocar de nuevo.
 - **Esperado:** cada caso con su resultado; tiempo de vencimiento observado cercano a 15 s.
 - **Evidencia:** vídeo del iPhone 14 mostrando placa y teléfono a la vez; log serie.
@@ -93,6 +102,7 @@ Las operaciones de umbral, aviso y confirmación las define T04 (#8). Los nombre
 ## E06 · Aviso manual y retorno al modo automático
 
 - **Matriz / issue:** P03 parcial · #8, #10.
+- **Entorno:** integrado (Android real con la ESP32-S3 real). Una repetición contra el simulador se registra aparte como simulada.
 - **Pasos:**
   1. Con la placa en modo automático, activar el aviso manual desde la app (`alert.set` o nombre vigente).
   2. Observar LED, OLED y sonido; anotar tiempo entre la acción y el efecto.
@@ -106,6 +116,10 @@ Las operaciones de umbral, aviso y confirmación las define T04 (#8). Los nombre
 
 - **Matriz / issue:** P05 parcial · #6.
 - **Objetivo:** cada solicitud de Android tiene una única respuesta identificable en la placa.
+- **Entorno:** integrado (Android real con la ESP32-S3 real). Una repetición contra el simulador se registra aparte como simulada.
+- **Precondiciones:**
+  - La app adquiere el control con `POST /v1/control/acquire` y lo renueva cada 2 000 ms con `/v1/control/renew` (el permiso dura 6 000 ms). Anotar el `lease_epoch` recibido y cualquier cambio durante la prueba.
+  - **Dependencia de #6:** la app todavía no tiene un registro de diagnóstico que muestre `request_id`, `sequence`, `lease_epoch` y código de respuesta. Si al ejecutar no existe, los pasos que lo usan quedan `NO EJECUTADA` con ese motivo; no se reconstruyen los valores a mano.
 - **Pasos:**
   1. Activar en la app el registro de diagnóstico que muestre `request_id`, `sequence`, `lease_epoch` y código de respuesta (sin el encabezado Authorization).
   2. Enviar diez órdenes `expression.set` con duraciones distintas entre 100 y 5 000 ms.
@@ -119,29 +133,41 @@ Las operaciones de umbral, aviso y confirmación las define T04 (#8). Los nombre
 
 - **Matriz / issue:** P04, P05, A02 · #5, #6, #16.
 - **Objetivo:** ninguna solicitud no autorizada o inválida produce efecto ni revela estado.
+- **Entorno:** integrado (cliente HTTPS del PC contra la ESP32-S3 real). La misma batería contra el simulador (A02) se registra aparte como simulada.
 - **Herramienta:** cliente HTTPS del PC (por ejemplo `curl` con el certificado de prueba) en la misma red. No usar opciones que desactiven la verificación TLS en los casos que deben pasar.
-- **Casos:**
+- **Precondiciones:**
+  - Para los casos que necesitan permiso vigente, el cliente de prueba adquiere el control con `POST /v1/control/acquire` y lo renueva cada 2 000 ms con `/v1/control/renew`. Anotar el `lease_epoch` recibido. Si no hay forma de renovar cada 2 s desde el PC, enviar cada solicitud dentro de los 6 000 ms siguientes a la adquisición o renovación y anotar el tiempo transcurrido.
+  - Para ver `request_id`, `sequence` y `lease_epoch` del lado de la app se depende del registro de diagnóstico de #6; si no existe, esos datos se toman solo del cliente del PC y del log serie, y la parte de la app queda `NO EJECUTADA`.
+- **Casos:** una fila por caso y un único resultado esperado por fila.
 
 | ID | Solicitud | Respuesta esperada (contrato) |
 |---|---|---|
 | E08a | Sin `Authorization` | 401 `UNAUTHENTICATED`, sin datos de estado |
-| E08b | Credencial de otro cliente o revocada | 401 o 403 `CLIENT_MISMATCH` |
-| E08c | Cliente que verifica contra un certificado distinto al emparejado | La conexión no se establece; la app no envía la orden |
-| E08d | JSON con clave repetida, propiedad desconocida o tipo incorrecto | 400 `INVALID_MESSAGE` |
-| E08e | Petición mayor de 1 024 bytes | 413 `MESSAGE_TOO_LARGE` |
-| E08f | `boot_id` anterior tras reiniciar la placa | 409 `STALE_BOOT` |
-| E08g | `sequence` ya consumida | 409 `STALE_SEQUENCE` o resultado original si sigue retenido |
-| E08h | Mismo `request_id` con otro contenido | 409 `ID_CONFLICT` |
-| E08i | Orden sin permiso vigente o con época anterior | 403 `NOT_OWNER` / 409 `STALE_EPOCH` / 409 `LEASE_EXPIRED` |
+| E08b | Credencial revocada | 401 `UNAUTHENTICATED`, sin datos de estado ni resultados anteriores |
+| E08c | Credencial válida del cliente B con el `client_id` del cliente A en el cuerpo | 403 `CLIENT_MISMATCH`, aunque el cuerpo traiga una época válida |
+| E08d | Cliente que verifica contra un certificado distinto al emparejado | La conexión no se establece; la app no envía la orden |
+| E08e | JSON con clave repetida | 400 `INVALID_MESSAGE` |
+| E08f | JSON con propiedad desconocida | 400 `INVALID_MESSAGE` |
+| E08g | JSON con tipo incorrecto (por ejemplo, `duration_ms` como cadena) | 400 `INVALID_MESSAGE` |
+| E08h | Petición mayor de 1 024 bytes | 413 `MESSAGE_TOO_LARGE` |
+| E08i | `boot_id` anterior tras reiniciar la placa | 409 `STALE_BOOT` |
+| E08j | Reintento exacto (mismo `request_id` y mismo contenido) de una orden aplicada, con la época vigente y el permiso sin vencer | Resultado original (`applied`, mismo `request_id`); contador de efectos igual a 1 |
+| E08k | `request_id` nuevo con una `sequence` ya consumida | 409 `STALE_SEQUENCE` |
+| E08l | Mismo `request_id` con otro contenido | 409 `ID_CONFLICT` |
+| E08m | Orden de un cliente autenticado mientras otro cliente tiene el control | 403 `NOT_OWNER` |
+| E08n | Orden con un `lease_epoch` anterior al vigente (tras liberar y volver a adquirir) | 409 `STALE_EPOCH` |
+| E08o | Orden con la época vigente después de dejar vencer el permiso sin renovar (más de 6 000 ms) | 409 `LEASE_EXPIRED` |
+| E08p | *Opcional, capa de transporte (T02/T03):* cuerpo con `Content-Type` distinto de `application/json` | 415 `UNSUPPORTED_MEDIA_TYPE`. Si la capa de transporte aún no lo implementa, `NO EJECUTADA` con ese motivo |
 
-- **Esperado:** en todos los casos el OLED, el LED y el parlante no cambian. Comprobarlo mirando la placa, no solo el código HTTP.
+- **Esperado:** en los rechazos el OLED, el LED y el parlante no cambian; en E08j no se produce un segundo efecto. Comprobarlo mirando la placa, no solo el código HTTP.
 - **Evidencia:** comando usado (sin credenciales), código y cuerpo de respuesta, línea del log serie, foto o vídeo de la placa sin cambio.
 - **No demuestra:** auditoría completa de seguridad (#16).
 
 ## E09 · Corte de enlace, autonomía, reconexión y recuperación
 
-- **Matriz / issue:** P15, P16 · #8, #9, #28.
+- **Matriz / issue:** P16 · #8, #9, #28. Solo cuenta además como P15 parcial si el corte deja sin internet (por ejemplo, apagando el router) y se anota que la IA quedó deshabilitada; apagar solo el Wi-Fi del teléfono no cubre P15.
 - **Objetivo:** con la placa alimentada, la sesión sigue sin enlace y al volver se recuperan las lecturas una sola vez.
+- **Entorno:** integrado (Android real con la ESP32-S3 real). Una repetición contra el simulador se registra aparte como simulada.
 - **Pasos:**
   1. Iniciar una sesión de estudio desde la app; anotar duración objetivo y hora.
   2. Cortar el enlace sin apagar la placa: apagar Wi-Fi del teléfono o del router (anotar cuál). Cronometrar cinco minutos.
@@ -158,11 +184,13 @@ Las operaciones de umbral, aviso y confirmación las define T04 (#8). Los nombre
 ## E10 · Consumo de la placa
 
 - **Matriz / issue:** P18 parcial · #7, #8.
+- **Entorno:** banco (placa con sus periféricos; el teléfono solo provoca los estados C3 y C6).
 - Procedimiento completo en [CONSUMO.md](CONSUMO.md#placa). Se ejecuta una vez por revisión de firmware, no por teléfono.
 
 ## E11 · Teléfono bloqueado 30 minutos
 
 - **Matriz / issue:** P18 · #11, #28.
+- **Entorno:** integrado (Android real con la ESP32-S3 real). Una repetición contra el simulador se registra aparte como simulada.
 - **Pasos:**
   1. Batería entre 50 % y 90 %, sin cargar; ahorro de batería activado; anotar el modo exacto.
   2. Con la app conectada, bloquear el teléfono 30 min sin tocarlo.
@@ -176,6 +204,7 @@ Las operaciones de umbral, aviso y confirmación las define T04 (#8). Los nombre
 
 - **Matriz / issue:** P01 parcial · #7.
 - **Objetivo:** dejar identificado el prototipo que usan E01–E11. Esta ficha es de banco; no se mezcla con resultados integrados.
+- **Entorno:** banco (placa sola, alimentada y con log por el puerto USB del PC).
 - **Pasos:**
   1. Fotografiar el montaje completo y cada módulo con su serigrafía visible.
   2. Registrar la identificación del diagnóstico USB (chip, revisión, flash, PSRAM) y el commit del firmware cargado.

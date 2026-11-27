@@ -8,14 +8,16 @@ Estado: **NO EJECUTADA**. Este plan fija método, condiciones y registro. Un val
 
 Elegir uno y anotar marca y modelo en [DISPOSITIVOS.md](DISPOSITIVOS.md#instrumentos):
 
-1. **Medidor USB en línea** entre la fuente de 5 V y la placa. No figura en el inventario: conseguirlo es una decisión del equipo, no de este plan.
-2. **Multímetro en serie** en la línea de 5 V mediante un adaptador USB con borneras o un cable preparado para ello. Usar la escala de mA con su fusible; empezar por la escala mayor. No abrir el circuito en la línea de 3,3 V con la placa conectada al PC.
+1. **Medidor USB en línea que deje pasar datos** entre el puerto del PC (o un hub USB alimentado) y la placa. No figura en el inventario: conseguirlo es una decisión del equipo, no de este plan.
+2. **Multímetro en serie** en la línea de 5 V mediante un adaptador USB con borneras o un cable preparado para ello. Empezar siempre por la escala mayor. En C5 y C6 (Wi-Fi y amplificador activos) usar la **escala de 10 A**, no la de mA, para no fundir el fusible de mA. No abrir el circuito en la línea de 3,3 V con la placa conectada al PC.
 
-Si no hay forma segura de medir corriente, registrar `LIMITACIÓN` con el motivo y medir solo la tensión de alimentación bajo carga.
+La SuperMini tiene un solo USB-C para alimentación y consola USB Serial/JTAG (ver la preparación común de [FICHAS.md](FICHAS.md)). Con log serie, la placa se alimenta desde el PC o un hub alimentado; con fuente externa (la fuente USB-C 5 V / 3 A está **por adquirir** según el [inventario](../../hardware/INVENTARIO.md)), la sesión va sin log y se registra aparte. Anotar en cada fila la fuente real.
+
+Si no hay forma segura de medir corriente, la condición queda `NO EJECUTADA` con el motivo y se mide solo la tensión de alimentación bajo carga. Solo se registra `LIMITACIÓN ACORDADA` si existen fecha y aprobación documentadas.
 
 ### Condiciones
 
-Medir cada estado al menos 60 s, con el mismo firmware y la misma fuente. Anotar mínimo, máximo y valor típico observado, en mA a la tensión medida.
+Medir cada estado al menos 60 s, con el mismo firmware y la misma fuente. Anotar mínimo, máximo y valor típico observado, en mA a la tensión medida. El mínimo y el máximo son lecturas del instrumento a su frecuencia de refresco (anotarla si el manual la indica); no son picos transitorios y no se presentan como tales.
 
 | ID | Estado | Cómo provocarlo |
 |---|---|---|
@@ -30,16 +32,16 @@ Si una condición no se puede provocar con el firmware disponible, dejarla `NO E
 
 ### Registro
 
-| ID | Tensión (V) | Corriente mín. (mA) | Corriente máx. (mA) | Típica (mA) | Duración (s) | Observaciones |
-|---|---|---|---|---|---|---|
-| C1 | | | | | | |
-| C2 | | | | | | |
-| C3 | | | | | | |
-| C4 | | | | | | |
-| C5 | | | | | | |
-| C6 | | | | | | |
+| ID | Fuente real | Escala | Tensión (V) | Corriente mín. (mA) | Corriente máx. (mA) | Típica (mA) | Duración (s) | Observaciones |
+|---|---|---|---|---|---|---|---|---|
+| C1 | | | | | | | | |
+| C2 | | | | | | | | |
+| C3 | | | | | | | | |
+| C4 | | | | | | | | |
+| C5 | | 10 A | | | | | | |
+| C6 | | 10 A | | | | | | |
 
-Anotar además cualquier reinicio (`reset_reason` en el log serie) o caída de tensión durante el sonido: es el síntoma de alimentación insuficiente que debe revisar H01.
+Anotar además cualquier reinicio (`reset_reason` en el log serie, en las sesiones con log) o caída de tensión durante el sonido: es el síntoma de alimentación insuficiente que debe revisar H01. Si el instrumento no permite observar la caída de tensión durante el sonido, anotarla como «no medida»; no se deduce de la ausencia de reinicios.
 
 <a id="telefono"></a>
 

@@ -17,7 +17,7 @@ Se actualiza al inicio de cada sesión de pruebas. Un dato sin comprobar se deja
 | Dato | INFINIX ZERO 30 5G | Galaxy S24 Ultra |
 |---|---|---|
 | Aporta | Walther | Winderson |
-| Versión de Android | 14, según Ajustes ([registro T00](https://github.com/wmrDev/agentic-iot-pet/pull/31)); confirmar | por registrar |
+| Versión de Android | 14, según Ajustes, preliminar: proviene del registro de T00 en el [PR #31](https://github.com/wmrDev/agentic-iot-pet/pull/31) (rama `codex/t00-apps`, sin fusionar); confirmar | por registrar |
 | Nivel de API | por registrar | por registrar |
 | Arquitectura (ABI) | por registrar | por registrar |
 | Capa del fabricante y versión | por registrar | por registrar |
@@ -53,12 +53,12 @@ Sin ADB: Ajustes → Acerca del teléfono → Información de software. La arqui
 
 | Elemento | Valor | Fuente |
 |---|---|---|
-| Placa | ESP32-S3 SuperMini, rev v0.2, 4 MB flash, 2 MB PSRAM | Medición preliminar de Winderson (25-11-2026), pendiente de revisión |
+| Placa | ESP32-S3 SuperMini; chip revisión v0.2, 4 MB flash, 2 MB PSRAM (preliminar) | Registro `docs/pruebas/resultados/2026-11-25-T00-prueba-usb.md` (diagnóstico USB del commit `424032f`), en las ramas `feat/T00-firmware` y `feat/H01-banco`, sin fusionar; pendiente de revisión |
 | OLED y controlador | por registrar | H01 (#7) |
-| TTP223 | Activo en alto, momentáneo (preliminar) | H01 preliminar |
+| TTP223 | Activo en alto, momentáneo (preliminar) | Registro `docs/pruebas/resultados/2026-11-25-H01-preliminar.md`, en las ramas `feat/H01-banco` y `feat/T00-firmware`, sin fusionar; pin de salida sin verificar |
 | INMP441 | por registrar | H01 |
 | MAX98357A y parlante | por registrar; compra del amplificador pendiente de confirmar según inventario | H01, [INVENTARIO](../../hardware/INVENTARIO.md) |
-| Fuente de alimentación | por registrar | Inventario: USB-C 5 V / 3 A |
+| Fuente de alimentación | por registrar; la fuente USB-C 5 V / 3 A está por adquirir (carrito Afel preparado) | [INVENTARIO](../../hardware/INVENTARIO.md) |
 | Pinout verificado | por registrar | H01; no se usa el pinout previsto como verificado |
 
 ## Instrumentos

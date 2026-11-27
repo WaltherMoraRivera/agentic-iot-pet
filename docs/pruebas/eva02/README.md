@@ -19,9 +19,9 @@ Cada ejecución genera un registro propio en `docs/pruebas/resultados/` con la [
 | Criterio de #29 | Fichas | Matriz | Depende de |
 |---|---|---|---|
 | Misma revisión de APK y firmware en ambos Android; SO, API, arquitectura, permisos e instalación | E01 | A04 parcial | #1, #18 |
-| Login, lectura actual y guardada, umbral, toque de confirmación, aviso manual y retorno automático | E02–E06 | P03, P04, P12 | #5, #6, #8, #9, #10 |
+| Login, lectura actual y guardada, umbral, toque de confirmación, aviso manual y retorno automático | E02–E06 | P02 parcial, P03, P04, P12; la lectura guardada (E03) no tiene ID propio | #5, #6, #8, #9, #10 |
 | Correlación de solicitudes y respuestas; rechazo de cliente no autorizado, TLS incorrecto o mensaje inválido sin aviso | E07, E08 | P04, P05, A02 | #5, #6, #16 |
-| Corte con placa alimentada, autonomía, reconexión y recuperación sin duplicados | E09 | P15, P16 | #8, #9, #28 |
+| Corte con placa alimentada, autonomía, reconexión y recuperación sin duplicados | E09 | P16; P15 parcial solo si el corte deja sin internet | #8, #9, #28 |
 | Consumo de placa y teléfono con condiciones e instrumentos | E10, E11 | P18 parcial | #7, #8, #11 |
 | Banco de la placa e identificación del prototipo | E12 | P01 parcial | #7 |
 
