@@ -6,9 +6,11 @@ Asistente físico de escritorio con expresiones, contacto, detección de ruido, 
 
 ## Estado real
 
-El diseño inicial fue aprobado el **17 de noviembre de 2026**. Esta base contiene documentación, plan, contratos iniciales y plantillas de colaboración. Al 25 de noviembre existe un firmware mínimo de diagnóstico (`firmware/`, PRUEBA_USB, T00 entrega 1): **compila para ESP32-S3 y todavía no se ha cargado en la placa**. **No hay apps, simulador ni compilación automática**; esos comandos del plan corresponden al resto de T00. Para continuar: [traspaso](docs/equipo/TRASPASO.md).
+El diseño inicial fue aprobado el **17 de noviembre de 2026**. T00 incorpora una pantalla compartida de bienvenida para Android y Windows, un arranque de consola para el simulador, el Gradle Wrapper y un firmware mínimo de diagnóstico USB (`firmware/`, PRUEBA_USB) que **compila para ESP32-S3 y todavía no se ha cargado en la placa**. [Entornos y comandos](docs/equipo/ENTORNOS.md) · [Traspaso](docs/equipo/TRASPASO.md).
 
-Repositorio compartido: https://github.com/WaltherMoraRivera/agentic-iot-pet. La preparación de OpenSpec y GitHub no implementa funciones de producto ni implica llamadas de IA pagadas.
+T01 verifica en Kotlin el contrato JSON y el permiso temporal de control con un reloj simulado. [Resultados de T01](docs/pruebas/resultados/2026-11-26-T01-contrato.md).
+
+Repositorio compartido: https://github.com/wmrDev/agentic-iot-pet. La preparación de OpenSpec y GitHub no implementa funciones de producto ni implica llamadas de IA pagadas.
 
 ## Empieza aquí
 
@@ -37,7 +39,7 @@ Un repositorio, una rama principal integrable y una rama por tarea. Cada integra
 
 `AGENTS.md` contiene las reglas comunes; `CLAUDE.md` las importa. No necesitan instalar las habilidades particulares del autor del plan: las tareas incluyen sus pasos y verificaciones.
 
-El firmware se amplía y los proyectos Gradle se crearán al completar T00 y las siguientes tareas. No se añaden carpetas vacías para aparentar implementación.
+El diagnóstico ESP32-S3 (PRUEBA_USB) está en `firmware/`. El estado de verificación de T00 distingue cada plataforma y el banco físico. No se añaden carpetas vacías para aparentar implementación.
 
 ## Condiciones de funcionamiento
 
@@ -54,4 +56,4 @@ Las limitaciones se registran; un resultado simulado nunca se presenta como prue
 
 [OpenSpec, responsabilidades, etiquetas y uso de GitHub](docs/equipo/OPENSPEC_GITHUB.md). Los issues y milestones se derivan de los cambios OpenSpec; el alcance opcional queda separado.
 
-[Backlog publicado con responsables](docs/equipo/BACKLOG.md) · [Issues](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues) · [Milestones](https://github.com/WaltherMoraRivera/agentic-iot-pet/milestones).
+[Backlog publicado con responsables](docs/equipo/BACKLOG.md) · [Issues](https://github.com/wmrDev/agentic-iot-pet/issues) · [Milestones](https://github.com/wmrDev/agentic-iot-pet/milestones).

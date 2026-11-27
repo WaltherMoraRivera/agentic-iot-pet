@@ -1,4 +1,8 @@
 CONFIG_IDF_TARGET="esp32s3"
 CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
-CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+# Consola: se usa el valor por defecto del ESP32-S3 (UART0 primaria y
+# USB Serial/JTAG secundaria, CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG).
+# Diagnóstico: ante un pánico, imprimir registros y detenerse en vez de
+# reiniciar, para no ocultar la causa en un bucle de reinicios.
+CONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y
 # CONFIG_SPIRAM is not set
