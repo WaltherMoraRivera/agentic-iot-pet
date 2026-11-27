@@ -23,6 +23,23 @@ static void expire_if_due(pet_state_t *p, int64_t now_ms)
     }
 }
 
+// True if a tap released at release_ms could still confirm: it came after the
+// request and inside the window.
+static bool released_in_window(const pet_state_t *p, int64_t release_ms)
+{
+    return release_ms > p->confirmation.created_ms && release_ms < p->confirmation.expires_ms;
+}
+
+// Time at which a tap gesture counts for the confirmation: its release. An
+// inconsistent value (before the press or after now) falls back to now.
+static int64_t tap_decision_ms(gesture_event_t event, int64_t now_ms)
+{
+    if (event.release_ms < event.press_start_ms || event.release_ms > now_ms) {
+        return now_ms;
+    }
+    return event.release_ms;
+}
+
 bool pet_request_confirmation(pet_state_t *p, uint32_t operation_id, uint32_t lease_epoch,
                               int64_t now_ms)
 {
@@ -41,9 +58,17 @@ bool pet_request_confirmation(pet_state_t *p, uint32_t operation_id, uint32_t le
     return true;
 }
 
-void pet_tick(pet_state_t *p, int64_t now_ms)
+void pet_tick(pet_state_t *p, int64_t now_ms, int64_t waiting_tap_release_ms)
 {
-    expire_if_due(p, now_ms);
+    // The detector reports a waiting tap at most double_gap_ms after its
+    // release (tap_max_ms more if a second press follows), so the delay is
+    // bounded.
+    const bool tap_in_flight = waiting_tap_release_ms != PET_NO_WAITING_TAP &&
+                               confirmation_pending(p) &&
+                               released_in_window(p, waiting_tap_release_ms);
+    if (!tap_in_flight) {
+        expire_if_due(p, now_ms);
+    }
     study_tick(&p->study, now_ms);
 }
 
@@ -95,7 +120,8 @@ static pet_action_t resolve_confirmation(pet_state_t *p, gesture_event_t event,
 pet_action_t pet_on_gesture(pet_state_t *p, gesture_event_t event, uint32_t current_epoch,
                             int64_t now_ms)
 {
-    expire_if_due(p, now_ms);
+    const bool is_tap = event.kind == GESTURE_TAP || event.kind == GESTURE_DOUBLE_TAP;
+    expire_if_due(p, is_tap ? tap_decision_ms(event, now_ms) : now_ms);
 
     // Ending a hold always closes voice, even if a confirmation arrived meanwhile.
     if (event.kind == GESTURE_HOLD_END) {

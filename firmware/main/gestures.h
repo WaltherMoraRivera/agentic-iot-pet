@@ -31,6 +31,9 @@ typedef enum {
 typedef struct {
     gesture_kind_t kind;
     int64_t press_start_ms; // start of the first press that formed the gesture
+    // TAP and DOUBLE_TAP: release of the first tap, which happened before the
+    // event is reported. Holds: the time the event was produced.
+    int64_t release_ms;
 } gesture_event_t;
 
 typedef struct {
@@ -49,3 +52,9 @@ bool gesture_init(gesture_detector_t *g, gesture_windows_t windows);
 
 // Feeds the current sensor level. Call on every poll; repeated levels are fine.
 gesture_event_t gesture_update(gesture_detector_t *g, bool pressed, int64_t now_ms);
+
+#define GESTURE_NO_WAITING_TAP (-1)
+
+// Release time of a tap that is still waiting to be classified (tap or first
+// half of a double tap), or GESTURE_NO_WAITING_TAP.
+int64_t gesture_waiting_tap_release_ms(const gesture_detector_t *g);

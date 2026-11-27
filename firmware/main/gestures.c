@@ -4,12 +4,13 @@
 
 static gesture_event_t none(void)
 {
-    return (gesture_event_t){.kind = GESTURE_NONE, .press_start_ms = 0};
+    return (gesture_event_t){.kind = GESTURE_NONE, .press_start_ms = 0, .release_ms = 0};
 }
 
-static gesture_event_t make(gesture_kind_t kind, int64_t press_start_ms)
+static gesture_event_t make(gesture_kind_t kind, int64_t press_start_ms, int64_t release_ms)
 {
-    return (gesture_event_t){.kind = kind, .press_start_ms = press_start_ms};
+    return (gesture_event_t){
+        .kind = kind, .press_start_ms = press_start_ms, .release_ms = release_ms};
 }
 
 bool gesture_init(gesture_detector_t *g, gesture_windows_t windows)
@@ -27,7 +28,7 @@ bool gesture_init(gesture_detector_t *g, gesture_windows_t windows)
 static gesture_event_t flush_tap(gesture_detector_t *g)
 {
     g->tap_pending = false;
-    return make(GESTURE_TAP, g->tap_press_start_ms);
+    return make(GESTURE_TAP, g->tap_press_start_ms, g->tap_release_ms);
 }
 
 gesture_event_t gesture_update(gesture_detector_t *g, bool pressed, int64_t now_ms)
@@ -53,7 +54,7 @@ gesture_event_t gesture_update(gesture_detector_t *g, bool pressed, int64_t now_
         }
         if (!g->holding && held >= w->hold_min_ms) {
             g->holding = true;
-            return make(GESTURE_HOLD_START, g->press_start_ms);
+            return make(GESTURE_HOLD_START, g->press_start_ms, now_ms);
         }
         return none();
     }
@@ -64,14 +65,14 @@ gesture_event_t gesture_update(gesture_detector_t *g, bool pressed, int64_t now_
         const int64_t held = now_ms - g->press_start_ms;
         if (g->holding) {
             g->holding = false;
-            return make(GESTURE_HOLD_END, g->press_start_ms);
+            return make(GESTURE_HOLD_END, g->press_start_ms, now_ms);
         }
         if (held > w->tap_max_ms) {
             return none(); // ambiguous length: neither tap nor hold
         }
         if (g->tap_pending) {
             g->tap_pending = false;
-            return make(GESTURE_DOUBLE_TAP, g->tap_press_start_ms);
+            return make(GESTURE_DOUBLE_TAP, g->tap_press_start_ms, g->tap_release_ms);
         }
         g->tap_pending = true;
         g->tap_press_start_ms = g->press_start_ms;
@@ -84,4 +85,9 @@ gesture_event_t gesture_update(gesture_detector_t *g, bool pressed, int64_t now_
         return flush_tap(g);
     }
     return none();
+}
+
+int64_t gesture_waiting_tap_release_ms(const gesture_detector_t *g)
+{
+    return g->tap_pending ? g->tap_release_ms : GESTURE_NO_WAITING_TAP;
 }

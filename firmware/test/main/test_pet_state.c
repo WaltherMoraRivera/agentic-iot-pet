@@ -10,9 +10,38 @@
 
 static const gesture_windows_t W = GESTURE_WINDOWS_PROVISIONAL;
 
+// A gesture whose first tap lasted 100 ms. Tests that depend on the release
+// time build the event with ev_released().
 static gesture_event_t ev(gesture_kind_t kind, int64_t press_start_ms)
 {
-    return (gesture_event_t){.kind = kind, .press_start_ms = press_start_ms};
+    return (gesture_event_t){
+        .kind = kind, .press_start_ms = press_start_ms, .release_ms = press_start_ms + 100};
+}
+
+static gesture_event_t ev_released(gesture_kind_t kind, int64_t press_start_ms,
+                                   int64_t release_ms)
+{
+    return (gesture_event_t){
+        .kind = kind, .press_start_ms = press_start_ms, .release_ms = release_ms};
+}
+
+// Runs the real detector and the pet in the same order as pet_app.c, every
+// 10 ms, with the sensor pressed in [press_ms, release_ms). Returns how many
+// confirmations were applied.
+static int run_loop_with_touch(pet_state_t *p, int64_t press_ms, int64_t release_ms,
+                               int64_t end_ms)
+{
+    gesture_detector_t g;
+    gesture_init(&g, W);
+    int confirmed = 0;
+    for (int64_t t = 0; t <= end_ms; t += 10) {
+        const gesture_event_t e = gesture_update(&g, t >= press_ms && t < release_ms, t);
+        if (e.kind != GESTURE_NONE && pet_on_gesture(p, e, 1, t) == PET_ACTION_CONFIRM) {
+            ++confirmed;
+        }
+        pet_tick(p, t, gesture_waiting_tap_release_ms(&g));
+    }
+    return confirmed;
 }
 
 // --- Study session -------------------------------------------------------
@@ -240,9 +269,9 @@ static void test_confirmation_expires_without_effect(void)
     pet_state_t p;
     pet_init(&p, 60000);
     pet_request_confirmation(&p, 1, 1, 0);
-    pet_tick(&p, CONFIRMATION_TIMEOUT_MS - 1);
+    pet_tick(&p, CONFIRMATION_TIMEOUT_MS - 1, PET_NO_WAITING_TAP);
     TEST_ASSERT_EQUAL(CONFIRMATION_PENDING, p.confirmation.state);
-    pet_tick(&p, CONFIRMATION_TIMEOUT_MS);
+    pet_tick(&p, CONFIRMATION_TIMEOUT_MS, PET_NO_WAITING_TAP);
     TEST_ASSERT_EQUAL(CONFIRMATION_CANCELLED, p.confirmation.state);
     TEST_ASSERT_NOT_EQUAL(PET_ACTION_CONFIRM,
                           pet_on_gesture(&p, ev(GESTURE_TAP, 15100), 1, 15800));
@@ -257,6 +286,71 @@ static void test_confirmation_late_tap_without_tick_is_rejected(void)
     TEST_ASSERT_NOT_EQUAL(PET_ACTION_CONFIRM,
                           pet_on_gesture(&p, ev(GESTURE_TAP, 14900), 1, CONFIRMATION_TIMEOUT_MS));
     TEST_ASSERT_EQUAL(CONFIRMATION_CANCELLED, p.confirmation.state);
+}
+
+// The single tap is reported about 350 ms after the release. A tap released
+// at 14.9 s is inside the 15 s window even if the event arrives later.
+static void test_confirmation_accepts_tap_released_before_expiry(void)
+{
+    pet_state_t p;
+    pet_init(&p, 60000);
+    pet_request_confirmation(&p, 1, 1, 0);
+    TEST_ASSERT_EQUAL(PET_ACTION_CONFIRM,
+                      pet_on_gesture(&p, ev_released(GESTURE_TAP, 14800, 14900), 1, 15260));
+    TEST_ASSERT_EQUAL(CONFIRMATION_APPLIED, p.confirmation.state);
+}
+
+static void test_confirmation_rejects_tap_released_at_expiry(void)
+{
+    pet_state_t p;
+    pet_init(&p, 60000);
+    pet_request_confirmation(&p, 1, 1, 0);
+    TEST_ASSERT_EQUAL(PET_ACTION_NONE,
+                      pet_on_gesture(&p, ev_released(GESTURE_TAP, 14900,
+                                                     CONFIRMATION_TIMEOUT_MS),
+                                     1, CONFIRMATION_TIMEOUT_MS + 360));
+    TEST_ASSERT_EQUAL(CONFIRMATION_CANCELLED, p.confirmation.state);
+}
+
+// Same case through the detector and the periodic tick: the tick at 15 s must
+// not cancel a confirmation whose tap was already released.
+static void test_confirmation_loop_accepts_tap_released_at_14_9_s(void)
+{
+    pet_state_t p;
+    pet_init(&p, 60000);
+    pet_request_confirmation(&p, 1, 1, 0);
+    TEST_ASSERT_EQUAL(1, run_loop_with_touch(&p, 14800, 14900, 17000));
+    TEST_ASSERT_EQUAL(CONFIRMATION_APPLIED, p.confirmation.state);
+    TEST_ASSERT_EQUAL(STUDY_IDLE, p.study.phase);
+}
+
+static void test_confirmation_loop_rejects_tap_released_after_expiry(void)
+{
+    pet_state_t p;
+    pet_init(&p, 60000);
+    pet_request_confirmation(&p, 1, 1, 0);
+    TEST_ASSERT_EQUAL(0, run_loop_with_touch(&p, 14950, 15050, 17000));
+    TEST_ASSERT_EQUAL(CONFIRMATION_CANCELLED, p.confirmation.state);
+}
+
+static void test_gesture_events_carry_first_release(void)
+{
+    gesture_detector_t g;
+    gesture_init(&g, W);
+    gesture_update(&g, true, 1000);
+    gesture_update(&g, false, 1100);
+    TEST_ASSERT_EQUAL_INT64(1100, gesture_waiting_tap_release_ms(&g));
+    const gesture_event_t tap = gesture_update(&g, false, 1101 + W.double_gap_ms);
+    TEST_ASSERT_EQUAL(GESTURE_TAP, tap.kind);
+    TEST_ASSERT_EQUAL_INT64(1100, tap.release_ms);
+    TEST_ASSERT_EQUAL_INT64(PET_NO_WAITING_TAP, gesture_waiting_tap_release_ms(&g));
+
+    gesture_update(&g, true, 5000);
+    gesture_update(&g, false, 5100);
+    gesture_update(&g, true, 5200);
+    const gesture_event_t dbl = gesture_update(&g, false, 5300);
+    TEST_ASSERT_EQUAL(GESTURE_DOUBLE_TAP, dbl.kind);
+    TEST_ASSERT_EQUAL_INT64(5100, dbl.release_ms);
 }
 
 static void test_confirmation_needs_press_started_after_request(void)
@@ -360,9 +454,9 @@ static void test_session_continues_without_network_events(void)
     pet_on_gesture(&p, ev(GESTURE_TAP, 0), 1, 700);
     // Losing the link changes the epoch; the local session must not stop.
     pet_on_epoch_change(&p, 2);
-    pet_tick(&p, 30000);
+    pet_tick(&p, 30000, PET_NO_WAITING_TAP);
     TEST_ASSERT_EQUAL(STUDY_RUNNING, p.study.phase);
-    pet_tick(&p, 60700);
+    pet_tick(&p, 60700, PET_NO_WAITING_TAP);
     TEST_ASSERT_EQUAL(STUDY_FINISHED, p.study.phase);
 }
 
@@ -412,6 +506,11 @@ void app_main(void)
     RUN_TEST(test_confirmation_double_tap_applies_once);
     RUN_TEST(test_confirmation_expires_without_effect);
     RUN_TEST(test_confirmation_late_tap_without_tick_is_rejected);
+    RUN_TEST(test_confirmation_accepts_tap_released_before_expiry);
+    RUN_TEST(test_confirmation_rejects_tap_released_at_expiry);
+    RUN_TEST(test_confirmation_loop_accepts_tap_released_at_14_9_s);
+    RUN_TEST(test_confirmation_loop_rejects_tap_released_after_expiry);
+    RUN_TEST(test_gesture_events_carry_first_release);
     RUN_TEST(test_confirmation_needs_press_started_after_request);
     RUN_TEST(test_confirmation_cancelled_by_epoch_change);
     RUN_TEST(test_confirmation_rejects_tap_from_other_epoch);

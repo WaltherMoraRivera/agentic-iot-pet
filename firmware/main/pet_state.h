@@ -61,8 +61,13 @@ void pet_init(pet_state_t *p, uint32_t default_study_ms);
 bool pet_request_confirmation(pet_state_t *p, uint32_t operation_id, uint32_t lease_epoch,
                               int64_t now_ms);
 
+#define PET_NO_WAITING_TAP GESTURE_NO_WAITING_TAP
+
 // Expires the pending confirmation and advances the study timer.
-void pet_tick(pet_state_t *p, int64_t now_ms);
+// waiting_tap_release_ms comes from gesture_waiting_tap_release_ms(): a tap
+// released inside the window but not reported yet keeps the confirmation
+// pending until the detector reports it. Pass PET_NO_WAITING_TAP otherwise.
+void pet_tick(pet_state_t *p, int64_t now_ms, int64_t waiting_tap_release_ms);
 
 // A handover, lost link or new epoch cancels the pending confirmation.
 void pet_on_epoch_change(pet_state_t *p, uint32_t current_epoch);
@@ -76,5 +81,7 @@ bool pet_sound_reaction_alerts(const pet_state_t *p);
 
 // Resolves one gesture into at most one action, by priority:
 // pending confirmation, then hold for voice, double tap, contextual tap.
+// A tap confirms when its release (event.release_ms) is inside the window,
+// even if the detector reports it after the window closed.
 pet_action_t pet_on_gesture(pet_state_t *p, gesture_event_t event, uint32_t current_epoch,
                             int64_t now_ms);

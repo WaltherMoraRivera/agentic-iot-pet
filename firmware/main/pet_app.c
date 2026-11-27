@@ -173,7 +173,7 @@ static void pet_task(void *arg)
         }
 
         const study_phase_t before = s_pet.study.phase;
-        pet_tick(&s_pet, now);
+        pet_tick(&s_pet, now, gesture_waiting_tap_release_ms(&s_gestures));
         if (before != s_pet.study.phase && s_pet.study.phase == STUDY_FINISHED) {
             set_session_marker(false);
             record_study_change(now);
