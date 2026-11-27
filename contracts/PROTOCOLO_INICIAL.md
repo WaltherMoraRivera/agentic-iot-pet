@@ -39,7 +39,7 @@ La adquisición y cualquier relevo son operaciones atómicas en la placa. El sim
 
 ## Orden: `POST /v1/commands`
 
-Forma inicial especificada en [command.schema.json](v1/command.schema.json). Ejemplo: [command-expression.json](examples/command-expression.json).
+Forma inicial descrita en [command.schema.json](v1/command.schema.json). El esquema es descriptivo: no se añade una dependencia de validación JSON Schema. El validador normativo de la versión 1 es `ProtocolCodec` (`apps/shared`), que aplica además las reglas que el esquema no expresa, como claves repetidas, representación de enteros y tamaño en bytes. Ejemplo: [command-expression.json](examples/command-expression.json).
 
 | Campo | Regla |
 |---|---|
@@ -81,6 +81,8 @@ La secuencia y el cache se serializan con la aplicación de efectos. El cache pu
 | 409 | `LEASE_EXPIRED` | El permiso ya no es válido |
 | 413 | `MESSAGE_TOO_LARGE` | Petición supera el límite |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` | No es JSON UTF-8 admitido |
+
+El rechazo de `Content-Type` incorrecto o de bytes UTF-8 inválidos (415) corresponde a la capa de transporte de T02/T03, antes de entregar texto a `ProtocolCodec`. T01 recibe cadenas ya decodificadas y no cubre ese caso.
 
 En error sin un `request_id` válido, la respuesta puede llevar `request_id:null`. Nunca incluir trazas, tokens o contraseñas. El cliente debe manejar una respuesta desconocida como fallo, sin mostrarla como éxito. Si falla el transporte o el servidor, la app conserva la incertidumbre de la operación y consulta/reintenta con el mismo ID cuando sea válido.
 
