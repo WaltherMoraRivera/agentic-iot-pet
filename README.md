@@ -8,7 +8,7 @@ Asistente físico de escritorio con expresiones, contacto, detección de ruido, 
 
 El diseño inicial fue aprobado el **17 de noviembre de 2026**. T00 incorpora una pantalla compartida de bienvenida para Android y Windows, un arranque de consola para el simulador y el Gradle Wrapper. [Entornos y comandos](docs/equipo/ENTORNOS.md).
 
-Repositorio compartido: https://github.com/WaltherMoraRivera/agentic-iot-pet. La preparación de OpenSpec y GitHub no implementa funciones de producto ni implica llamadas de IA pagadas.
+Repositorio compartido: https://github.com/wmrDev/agentic-iot-pet. La preparación de OpenSpec y GitHub no implementa funciones de producto ni implica llamadas de IA pagadas.
 
 ## Empieza aquí
 
@@ -54,4 +54,4 @@ Las limitaciones se registran; un resultado simulado nunca se presenta como prue
 
 [OpenSpec, responsabilidades, etiquetas y uso de GitHub](docs/equipo/OPENSPEC_GITHUB.md). Los issues y milestones se derivan de los cambios OpenSpec; el alcance opcional queda separado.
 
-[Backlog publicado con responsables](docs/equipo/BACKLOG.md) · [Issues](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues) · [Milestones](https://github.com/WaltherMoraRivera/agentic-iot-pet/milestones).
+[Backlog publicado con responsables](docs/equipo/BACKLOG.md) · [Issues](https://github.com/wmrDev/agentic-iot-pet/issues) · [Milestones](https://github.com/wmrDev/agentic-iot-pet/milestones).
