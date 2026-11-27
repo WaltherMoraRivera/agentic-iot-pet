@@ -8,6 +8,8 @@ Asistente físico de escritorio con expresiones, contacto, detección de ruido, 
 
 El diseño inicial fue aprobado el **17 de noviembre de 2026**. T00 incorpora una pantalla compartida de bienvenida para Android y Windows, un arranque de consola para el simulador, el Gradle Wrapper y un firmware mínimo de diagnóstico USB (`firmware/`, PRUEBA_USB) que **compila para ESP32-S3 y todavía no se ha cargado en la placa**. [Entornos y comandos](docs/equipo/ENTORNOS.md) · [Traspaso](docs/equipo/TRASPASO.md).
 
+T01 verifica en Kotlin el contrato JSON y el permiso temporal de control con un reloj simulado. [Resultados de T01](docs/pruebas/resultados/2026-11-26-T01-contrato.md).
+
 Repositorio compartido: https://github.com/wmrDev/agentic-iot-pet. La preparación de OpenSpec y GitHub no implementa funciones de producto ni implica llamadas de IA pagadas.
 
 ## Empieza aquí

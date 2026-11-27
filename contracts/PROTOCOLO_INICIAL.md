@@ -12,6 +12,8 @@ IDs de cliente, solicitud y arranque: UUID con representación canónica en min�
 
 Órdenes/control: máximo 1.024 bytes por petición. Respuestas de esta primera integración: máximo 4.096 bytes. Rechazar JSON con claves repetidas, tipos incorrectos, propiedades desconocidas y valores fuera de rango. No convertir cadenas a números ni aceptar booleanos como enteros. Las futuras páginas de eventos y capturas de audio tendrán límites separados.
 
+Los campos enteros de la petición se escriben con dígitos decimales, sin signo, fracción ni exponente. Por ejemplo, una duración de `100` es válida, y `100.0` y `1e2` se rechazan. Esta regla de representación se comprueba sobre el cuerpo recibido, junto con los tipos y rangos del esquema.
+
 ## Estado: `GET /v1/state`
 
 Solo clientes autenticados. Respuesta 200 con `version`, `boot_id`, `expression`, `owner_client_id`, `lease_epoch`, `lease_remaining_ms` y `uptime_ms`. `owner_client_id` es null cuando no hay centro; en ese caso `lease_remaining_ms=0`. `lease_epoch` es un contador creciente dentro del arranque, inicialmente 0. `uptime_ms` es monotónico, no una fecha civil.
@@ -37,7 +39,7 @@ La adquisición y cualquier relevo son operaciones atómicas en la placa. El sim
 
 ## Orden: `POST /v1/commands`
 
-Forma inicial especificada en [command.schema.json](v1/command.schema.json). Ejemplo: [command-expression.json](examples/command-expression.json).
+Forma inicial descrita en [command.schema.json](v1/command.schema.json). El esquema es descriptivo: no se añade una dependencia de validación JSON Schema. El validador normativo de la versión 1 es `ProtocolCodec` (`apps/shared`), que aplica además las reglas que el esquema no expresa, como claves repetidas, representación de enteros y tamaño en bytes. Ejemplo: [command-expression.json](examples/command-expression.json).
 
 | Campo | Regla |
 |---|---|
@@ -79,6 +81,8 @@ La secuencia y el cache se serializan con la aplicación de efectos. El cache pu
 | 409 | `LEASE_EXPIRED` | El permiso ya no es válido |
 | 413 | `MESSAGE_TOO_LARGE` | Petición supera el límite |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` | No es JSON UTF-8 admitido |
+
+El rechazo de `Content-Type` incorrecto o de bytes UTF-8 inválidos (415) corresponde a la capa de transporte de T02/T03, antes de entregar texto a `ProtocolCodec`. T01 recibe cadenas ya decodificadas y no cubre ese caso.
 
 En error sin un `request_id` válido, la respuesta puede llevar `request_id:null`. Nunca incluir trazas, tokens o contraseñas. El cliente debe manejar una respuesta desconocida como fallo, sin mostrarla como éxito. Si falla el transporte o el servidor, la app conserva la incertidumbre de la operación y consulta/reintenta con el mismo ID cuando sea válido.
 
