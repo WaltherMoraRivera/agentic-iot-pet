@@ -5,6 +5,7 @@
 #include "gestures.h"
 #include "pet_state.h"
 #include "study_session.h"
+#include "test_suites.h"
 #include "unity.h"
 
 static const gesture_windows_t W = GESTURE_WINDOWS_PROVISIONAL;
@@ -396,5 +397,8 @@ void app_main(void)
     RUN_TEST(test_tap_starts_study_and_double_tap_toggles_pause);
     RUN_TEST(test_double_tap_without_session_does_nothing);
     RUN_TEST(test_session_continues_without_network_events);
+    run_sound_reaction_tests();
+    run_telemetry_tests();
+    run_settings_tests();
     UNITY_END();
 }
