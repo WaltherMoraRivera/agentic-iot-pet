@@ -124,8 +124,15 @@ class DeviceAuthorityTest {
         authority.handle(acquire(1), a)
         val request = command()
         authority.handle(request, a)
-        assertEquals(ErrorCode.ID_CONFLICT, authority.handle(request.copy(expression = Expression.ALERT), a).code)
+        now = 500
+        val changed = request.copy(expression = Expression.ALERT, durationMs = 5000)
+        val conflict = authority.handle(changed, a)
+        assertEquals(ErrorCode.ID_CONFLICT, conflict.code)
+        assertNull(conflict.state)
+        now = 999
         assertEquals(Expression.HAPPY, authority.snapshot().expression)
+        now = 1000
+        assertEquals(Expression.IDLE, authority.snapshot().expression)
     }
 
     @Test
@@ -170,7 +177,9 @@ class DeviceAuthorityTest {
         assertNull(mismatch.state)
         val rebooted = DeviceAuthority(MonotonicClock { now })
         assertNotEquals(boot, rebooted.snapshot().bootId)
-        assertEquals(ErrorCode.STALE_BOOT, rebooted.handle(order, a).code)
+        val staleBoot = rebooted.handle(order, a)
+        assertEquals(ErrorCode.STALE_BOOT, staleBoot.code)
+        assertNull(staleBoot.state)
         assertEquals(Expression.IDLE, rebooted.snapshot().expression)
         now = 6000
         authority.handle(acquire(3), a)
@@ -190,5 +199,50 @@ class DeviceAuthorityTest {
         assertEquals(ErrorCode.UNAUTHENTICATED, unauthorized.code)
         assertNull(unauthorized.state)
         assertEquals(ErrorCode.CLIENT_MISMATCH, authority.handle(order, b).code)
+    }
+
+    @Test
+    fun authenticationPrecedesMessageValidity() = runTest {
+        authority.handle(acquire(1), a)
+        val reply = authority.handle(command().copy(durationMs = 99), null)
+        assertEquals(ErrorCode.UNAUTHENTICATED, reply.code)
+        assertNull(reply.state)
+    }
+
+    @Test
+    fun otherClientCannotUseCurrentEpoch() = runTest {
+        authority.handle(acquire(1), a)
+        now = 1000
+        val attempts = listOf(
+            ControlRequest(header(1, b, request = 101), ControlAction.RENEW, 1),
+            Command(header(2, b, request = 102), 1, Expression.ALERT, 1000),
+            ControlRequest(header(3, b, request = 103), ControlAction.RELEASE, 1),
+        )
+        for (attempt in attempts) {
+            val reply = authority.handle(attempt, b)
+            assertEquals(ErrorCode.NOT_OWNER, reply.code)
+            assertNull(reply.state)
+        }
+        val state = authority.snapshot()
+        assertEquals(a.clientId, state.ownerClientId)
+        assertEquals(1, state.leaseEpoch)
+        assertEquals(5000L, state.leaseRemainingMs)
+        assertEquals(Expression.IDLE, state.expression)
+    }
+
+    @Test
+    fun ownerCannotRenewOrReleaseExpiredLease() = runTest {
+        authority.handle(acquire(1), a)
+        now = 6000
+        for ((sequence, action) in listOf(2 to ControlAction.RENEW, 3 to ControlAction.RELEASE)) {
+            val reply = authority.handle(ControlRequest(header(sequence), action, 1), a)
+            assertEquals(ErrorCode.LEASE_EXPIRED, reply.code)
+            assertNull(reply.state)
+        }
+        val state = authority.snapshot()
+        assertNull(state.ownerClientId)
+        assertEquals(1, state.leaseEpoch)
+        assertEquals(0L, state.leaseRemainingMs)
+        assertEquals(2, authority.handle(acquire(1, b, request = 101), b).state?.leaseEpoch)
     }
 }

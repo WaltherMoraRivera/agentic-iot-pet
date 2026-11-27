@@ -45,8 +45,8 @@ class DeviceAuthority(private val clock: MonotonicClock, private val bootId: Str
 
     suspend fun handle(request: Request, principal: Principal?): Reply = mutex.withLock {
         val header = request.header
-        if (!request.isValid()) return@withLock reject(request, ErrorCode.INVALID_MESSAGE)
         if (principal == null) return@withLock reject(request, ErrorCode.UNAUTHENTICATED)
+        if (!request.isValid()) return@withLock reject(request, ErrorCode.INVALID_MESSAGE)
         if (principal.clientId != header.clientId) return@withLock reject(request, ErrorCode.CLIENT_MISMATCH)
         if (header.bootId != bootId) return@withLock reject(request, ErrorCode.STALE_BOOT)
 
