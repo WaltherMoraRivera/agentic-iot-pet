@@ -12,6 +12,7 @@
 - [ ] 2.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
 - [ ] 2.3 Verificar: Primera app autorizada con identidad verificada; QR vencido/reutilizado y cliente revocado rechazados; no se desactiva TLS.
 - [ ] 2.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
+  - [Casos preparados sin placa](../../../docs/pruebas/T02-casos.md): 25 casos planificados (17 compartidos, 1 manual en Android, 3 de simulador y 4 de placa) y preguntas abiertas del contrato. Sin implementación ni resultados.
 
 ## 3. T03 Expresión confirmada de extremo a extremo por HTTPS
 - [ ] 3.1 Revisar contrato, dependencias y alcance del issue [#6](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/6).
