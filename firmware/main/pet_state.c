@@ -54,6 +54,23 @@ void pet_on_epoch_change(pet_state_t *p, uint32_t current_epoch)
     }
 }
 
+bool pet_set_alert_mode(pet_state_t *p, alert_mode_t mode)
+{
+    if (mode != ALERT_MODE_AUTO && mode != ALERT_MODE_MANUAL) {
+        return false;
+    }
+    if (p->alert_mode == mode) {
+        return false;
+    }
+    p->alert_mode = mode;
+    return true;
+}
+
+bool pet_sound_reaction_alerts(const pet_state_t *p)
+{
+    return p->alert_mode == ALERT_MODE_AUTO;
+}
+
 // While a confirmation is pending, touches belong to it: they either confirm
 // or do nothing, so one touch can never confirm and start something else.
 static pet_action_t resolve_confirmation(pet_state_t *p, gesture_event_t event,

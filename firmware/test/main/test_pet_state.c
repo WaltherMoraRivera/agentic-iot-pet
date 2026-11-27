@@ -366,6 +366,31 @@ static void test_session_continues_without_network_events(void)
     TEST_ASSERT_EQUAL(STUDY_FINISHED, p.study.phase);
 }
 
+static void test_manual_alert_and_return_to_auto_change_once(void)
+{
+    pet_state_t p;
+    pet_init(&p, 60000);
+    TEST_ASSERT_EQUAL(ALERT_MODE_AUTO, p.alert_mode);
+    TEST_ASSERT_TRUE(pet_sound_reaction_alerts(&p));
+
+    TEST_ASSERT_TRUE(pet_set_alert_mode(&p, ALERT_MODE_MANUAL));
+    TEST_ASSERT_FALSE(pet_set_alert_mode(&p, ALERT_MODE_MANUAL));
+    // The manual alert is already on: a sound reaction must not add another.
+    TEST_ASSERT_FALSE(pet_sound_reaction_alerts(&p));
+
+    TEST_ASSERT_TRUE(pet_set_alert_mode(&p, ALERT_MODE_AUTO));
+    TEST_ASSERT_FALSE(pet_set_alert_mode(&p, ALERT_MODE_AUTO));
+    TEST_ASSERT_TRUE(pet_sound_reaction_alerts(&p));
+}
+
+static void test_alert_mode_rejects_unknown_values(void)
+{
+    pet_state_t p;
+    pet_init(&p, 60000);
+    TEST_ASSERT_FALSE(pet_set_alert_mode(&p, (alert_mode_t)7));
+    TEST_ASSERT_EQUAL(ALERT_MODE_AUTO, p.alert_mode);
+}
+
 void app_main(void)
 {
     UNITY_BEGIN();
@@ -397,6 +422,8 @@ void app_main(void)
     RUN_TEST(test_tap_starts_study_and_double_tap_toggles_pause);
     RUN_TEST(test_double_tap_without_session_does_nothing);
     RUN_TEST(test_session_continues_without_network_events);
+    RUN_TEST(test_manual_alert_and_return_to_auto_change_once);
+    RUN_TEST(test_alert_mode_rejects_unknown_values);
     run_sound_reaction_tests();
     run_telemetry_tests();
     run_settings_tests();

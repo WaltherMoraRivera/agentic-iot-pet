@@ -37,8 +37,17 @@ typedef enum {
     PET_ACTION_VOICE_RELEASE, // hold ended: stop the capture
 } pet_action_t;
 
+// AUTO: the pet alerts when the sound reaction triggers. MANUAL: an alert
+// set from the app stays on until the app returns to AUTO; sound reactions
+// do not add a second alert meanwhile.
+typedef enum {
+    ALERT_MODE_AUTO = 0,
+    ALERT_MODE_MANUAL,
+} alert_mode_t;
+
 typedef struct {
     study_session_t study;
+    alert_mode_t alert_mode;
     confirmation_t confirmation;
     uint32_t next_confirmation_id;
     uint32_t default_study_ms;
@@ -57,6 +66,13 @@ void pet_tick(pet_state_t *p, int64_t now_ms);
 
 // A handover, lost link or new epoch cancels the pending confirmation.
 void pet_on_epoch_change(pet_state_t *p, uint32_t current_epoch);
+
+// Applies an alert mode already confirmed by touch. Returns true only when the
+// mode changes, so repeating the same request has no second effect.
+bool pet_set_alert_mode(pet_state_t *p, alert_mode_t mode);
+
+// True when a sound reaction should produce an alert (only in AUTO).
+bool pet_sound_reaction_alerts(const pet_state_t *p);
 
 // Resolves one gesture into at most one action, by priority:
 // pending confirmation, then hold for voice, double tap, contextual tap.
