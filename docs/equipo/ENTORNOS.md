@@ -33,11 +33,11 @@ T00 completará esta tabla con versiones exactas probadas y comandos observados,
 | Gradle Wrapper, plugins Android y Kotlin | Gradle 8.13, AGP 8.11.1, Kotlin 2.2.21 |
 | Compose Multiplatform | Compose 1.9.3 y Material 3 1.9.0 |
 | Android minSdk / compileSdk / targetSdk | 24 / 36 / 36. La instalación en teléfonos reales se verifica por separado. |
-| ESP-IDF y toolchain | A registrar en T00 |
+| ESP-IDF y toolchain | ESP-IDF 5.5.6, Xtensa GCC 14.2.0, Python 3.11.2, CMake 3.30.2 y Ninja 1.12.1, observados al compilar el diagnóstico del PR #27 |
 | Room, SQLite y KSP | A fijar en T05 con prueba Android/Windows |
-| Sistema Windows de referencia | A registrar en T00 |
+| Sistema Windows de referencia | Windows 25H2, build 26200.9974 (equipo de Walther) |
 
-La compilación local produjo la APK de depuración y el código de escritorio. El workflow de Gradle está preparado y su ejecución en GitHub queda pendiente.
+La compilación local produjo la APK de depuración y el código de escritorio. El job `gradle` del workflow de GitHub Actions ya pasó en `windows-2025` con el mismo comando.
 
 ## Comandos de T00
 
