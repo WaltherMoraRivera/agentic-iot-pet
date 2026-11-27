@@ -27,4 +27,4 @@ Vincular PR, evidencia y escenario verificado; actualizar tasks.md y revisar con
 
 ## Cuentas del equipo
 
-Solo WaltherMoraRivera figura actualmente como colaborador. Maximiliano y Winderson quedan identificados nominalmente en los issues; se asignarán sus cuentas cuando se conozcan y tengan acceso. No se inventan usuarios ni se envían invitaciones sin identificarlos.
+Walther (`wmrDev`) y Winderson (`WindersonCastrillo`) están disponibles para asignación en GitHub. Las tareas de Maximiliano indican su responsabilidad nominal hasta confirmar su cuenta y acceso.
