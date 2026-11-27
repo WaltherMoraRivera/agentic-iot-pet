@@ -14,9 +14,9 @@ idf.py -C test set-target esp32s3
 idf.py -C test -p COM12 flash monitor
 ```
 
-- **Esperado:** el resumen final de Unity con `0 Failures` sobre 49 tests. Copiar al registro las líneas finales del monitor.
+- **Esperado:** el resumen final de Unity con `0 Failures` sobre 61 tests. Copiar al registro las líneas finales del monitor.
 - **Ojo:** `test_settings.c` borra la NVS de la placa. Después de los tests, volver a cargar el firmware de producto (paso 2).
-- `test_wall_clock_does_not_change_session` cambia la hora civil de la placa una hora y la restaura al terminar.
+- `test_env_esp_timer_ignores_settimeofday` es una prueba del entorno, no de la lógica de sesión: comprueba que `esp_timer` no cambia al mover la hora civil con `settimeofday`. Cambia la hora civil de la placa una hora y la restaura al terminar.
 
 Si algún test falla, registrar cuál, el mensaje de Unity y la revisión. No corregir el test para que pase sin revisar antes la lógica.
 
@@ -50,6 +50,7 @@ Anotar las duraciones reales de cada gesto (el banco H01 las mide) y comparar co
 
 1. Con **Sound capture calibrated** desactivado, la placa guarda el nivel pero no reacciona.
 2. Dejar la placa 60 s en silencio y luego producir el ruido de referencia (palmada a distancia fija, anotada). Leer los niveles en el banco H01 (prueba del INMP441), que imprime cinco valores por segundo.
+   **Ojo:** esos niveles salen del firmware de banco H01, no del firmware de producto. No está verificado que el firmware H01 calcule el nivel igual que `sensors.c` (RMS sin componente continua sobre 24 bits, relativo a la escala digital); anotar en el registro la revisión del firmware H01 usada y comprobar después, con el firmware de producto, que el umbral elegido reacciona a la palmada y no al silencio.
 3. Elegir un umbral entre el ruido de fondo y la palmada, con margen mayor que la histéresis (0,05). Anotarlo en el registro.
 4. Mientras no exista `config.set` (T03), cambiar el valor por defecto en `settings_defaults()` o cargarlo por NVS, y activar **Sound capture calibrated**.
 
@@ -63,6 +64,18 @@ Anotar las duraciones reales de cada gesto (el banco H01 las mide) y comparar co
 | Estabilidad | 20 avisos seguidos | Sin reinicios (`reset_reason` igual tras la prueba) |
 
 Medir el tiempo entre el fin del sonido y la siguiente reacción posible. Si 200 ms no basta para evitar que la mascota reaccione a su propio sonido, ajustar `SOUND_DEFAULT_POST_PLAYBACK_MS` y registrar el valor medido.
+
+## Evidencia de compilación
+
+**Estado: NO EJECUTADO.** Pendiente de completar por quien compile.
+
+| Campo | Valor |
+|---|---|
+| Revisión (commit) | |
+| Entorno (ESP-IDF, sistema) | |
+| `idf.py build` (producto) | |
+| `idf.py -C test build` (tests) | |
+| Advertencias relevantes | |
 
 ## Qué no demuestran estas pruebas
 

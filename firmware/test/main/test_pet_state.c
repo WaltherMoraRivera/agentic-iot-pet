@@ -137,10 +137,12 @@ static void test_study_reboot_with_marker_is_interrupted_without_duration(void)
     TEST_ASSERT_EQUAL(STUDY_IDLE, s.phase);
 }
 
-// Runs on the target: moves the civil clock one hour forward and checks that
-// the monotonic time feeding the session does not jump. The lease part of
-// this check belongs to T03, which does not exist yet.
-static void test_wall_clock_does_not_change_session(void)
+// Environment test, not session logic: on the target, moving the civil clock
+// with settimeofday() must not move esp_timer, the monotonic clock that
+// pet_app.c feeds to the session. The session itself only sees the ms values
+// it is given, which the study tests already cover. The lease part of this
+// check belongs to T03, which does not exist yet.
+static void test_env_esp_timer_ignores_settimeofday(void)
 {
     study_session_t s;
     study_init(&s);
@@ -495,7 +497,7 @@ void app_main(void)
     RUN_TEST(test_study_operations_rejected_when_idle);
     RUN_TEST(test_study_new_session_after_finish_gets_new_id);
     RUN_TEST(test_study_reboot_with_marker_is_interrupted_without_duration);
-    RUN_TEST(test_wall_clock_does_not_change_session);
+    RUN_TEST(test_env_esp_timer_ignores_settimeofday);
     RUN_TEST(test_gesture_rejects_inconsistent_windows);
     RUN_TEST(test_gesture_tap_reported_after_double_gap);
     RUN_TEST(test_gesture_double_tap_never_also_taps);
