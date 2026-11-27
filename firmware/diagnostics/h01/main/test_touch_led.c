@@ -16,10 +16,16 @@ static const char *const TAG = "H01_TOUCH";
 // log shows what the TTP223 really outputs.
 #define POLL_MS 5
 
+// Pins are validated before use; the guard keeps the shift defined for -1.
+static uint64_t pin_mask(int gpio)
+{
+    return gpio < 0 ? 0 : 1ULL << gpio;
+}
+
 static void configure_led(int gpio)
 {
     const gpio_config_t led = {
-        .pin_bit_mask = 1ULL << gpio,
+        .pin_bit_mask = pin_mask(gpio),
         .mode = GPIO_MODE_OUTPUT,
     };
     ESP_ERROR_CHECK(gpio_config(&led));
@@ -51,7 +57,7 @@ void test_touch_led_run(void)
     // The TTP223 drives its output, so the pull-down only defines the level
     // when the module is disconnected.
     const gpio_config_t touch = {
-        .pin_bit_mask = 1ULL << touch_gpio,
+        .pin_bit_mask = pin_mask(touch_gpio),
         .mode = GPIO_MODE_INPUT,
         .pull_down_en = GPIO_PULLDOWN_ENABLE,
     };
