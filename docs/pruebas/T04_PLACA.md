@@ -67,15 +67,15 @@ Medir el tiempo entre el fin del sonido y la siguiente reacción posible. Si 200
 
 ## Evidencia de compilación
 
-**Estado: NO EJECUTADO.** Pendiente de completar por quien compile.
+**Estado: compilación correcta; ejecución en placa NO EJECUTADA.** La compilación no equivale a prueba física.
 
 | Campo | Valor |
 |---|---|
-| Revisión (commit) | |
-| Entorno (ESP-IDF, sistema) | |
-| `idf.py build` (producto) | |
-| `idf.py -C test build` (tests) | |
-| Advertencias relevantes | |
+| Revisión (commit) | `b503c73` |
+| Entorno (ESP-IDF, sistema) | ESP-IDF v5.5.6, Xtensa GCC 14.2.0, Python 3.11.2 (entorno de ESP-IDF), Windows 11 Home 25H2 build 26200. Compiló Claude el 27-11-2026 por encargo de Walther. |
+| `idf.py build` (producto) | Código 0. `prueba_usb.bin` de `0x447f0` bytes, 73 % libre en la partición de 1 MB; imagen total de 280 445 bytes. |
+| `idf.py -C test build` (tests) | Código 0. `pet_state_test.bin` de `0x35420` bytes, 79 % libre. Los 61 tests no se ejecutaron: requieren la placa. |
+| Advertencias relevantes | Ninguna en `firmware/main` ni en `firmware/test/main`. |
 
 ## Qué no demuestran estas pruebas
 
