@@ -8,7 +8,7 @@
 | Git | Detectado en PATH | Por verificar | Por verificar |
 | JDK | Microsoft OpenJDK 17.0.20.1 | Por verificar | Por verificar |
 | Android Studio y SDK | Build 262.9437.185.2621.16467767, plataforma 36 rev. 2, Build Tools 35.0.0 y ADB 37.0.1 | Por verificar | Por verificar |
-| ESP-IDF y herramientas | ESP-IDF 5.5.6 instalado. El entorno de shell inicial requiere activación y herramientas de build. | Por verificar | ESP-IDF 5.5.6 en CachyOS, usado en el PR #27 |
+| ESP-IDF y herramientas | ESP-IDF 5.5.6; compila `firmware/` (27-11). Activar con `export.ps1` usando el Python 3.11 de `C:\Espressif\tools\idf-python` | Por verificar | Linux: v5.5.6 verificado (25-11) |
 | Teléfono | INFINIX ZERO 30 5G, XOS 14.5.0 | iPhone 14 | Galaxy S24 Ultra |
 | Versión de Android | Android 14, informado por Walther | No aplica (iOS) | Por registrar |
 
@@ -33,15 +33,15 @@ T00 completará esta tabla con versiones exactas probadas y comandos observados,
 | Gradle Wrapper, plugins Android y Kotlin | Gradle 8.13, AGP 8.11.1, Kotlin 2.2.21 |
 | Compose Multiplatform | Compose 1.9.3 y Material 3 1.9.0 |
 | Android minSdk / compileSdk / targetSdk | 24 / 36 / 36. La instalación en teléfonos reales se verifica por separado. |
-| ESP-IDF y toolchain | ESP-IDF 5.5.6, Xtensa GCC 14.2.0, Python 3.11.2, CMake 3.30.2 y Ninja 1.12.1, observados al compilar el diagnóstico del PR #27 |
+| ESP-IDF y toolchain | Windows (27-11): ESP-IDF 5.5.6, Xtensa GCC 14.2.0, Python 3.11.2, CMake 3.30.2 y Ninja 1.12.1. Linux (25-11, CachyOS): ESP-IDF v5.5.6, Xtensa GCC 14.2.0, Python 3.14.10, CMake 4.5.1, Ninja 1.13.2, esptool 4.14.0. [Evidencia](../pruebas/resultados/2026-11-25-T00-prueba-usb.md) |
 | Room, SQLite y KSP | A fijar en T05 con prueba Android/Windows |
 | Sistema Windows de referencia | Windows 25H2, build 26200.9974 (equipo de Walther) |
 
-La compilación local produjo la APK de depuración y el código de escritorio. El job `gradle` del workflow de GitHub Actions ya pasó en `windows-2025` con el mismo comando.
+La compilación local produjo la APK de depuración y el código de escritorio. El job `gradle` del workflow de GitHub Actions ya pasó en `windows-2025` con el mismo comando. No hay versiones de producto validadas en hardware en este momento.
 
 ## Comandos de T00
 
-Se ejecutan desde la raíz, salvo firmware. El build de ESP32-S3 requiere el checkout que contiene el diagnóstico del PR #27.
+Se ejecutan desde la raíz, salvo firmware (`cd firmware && idf.py build`). `idf.py build` se verificó en el Linux (CachyOS) de Winderson con `424032f` y en Windows con `b951b8f`; ninguno equivale a prueba en la placa.
 
 | Objetivo | Windows / PowerShell | Linux |
 |---|---|---|
