@@ -1,6 +1,6 @@
 # OpenSpec, GitHub y prioridades
 
-Plan aprobado inicialmente por Walther. Walther lidera e integra de forma flexible; Maximiliano colabora con foco en montaje y pruebas físicas; Winderson lidera lo gráfico y visual. No son silos exclusivos. Se requiere revisor distinto del implementador.
+Plan aprobado inicialmente por Walther. Walther lidera e integra de forma flexible; Maximiliano colabora con foco en montaje y pruebas físicas; Winderson lidera lo gráfico y visual. No son silos exclusivos. Cada cambio tiene una revisión de código distinta de su implementación; puede hacerla un agente (D10).
 
 ## Fuente de verdad
 
@@ -21,10 +21,19 @@ OpenSpec 2.1.0 se usa sin instalación global: `npx --yes @fission-ai/openspec@2
 
 Fuentes consultadas: [Claude](https://platform.claude.com/docs/en/models/overview), [Codex](https://developers.openai.com/codex/models), [OpenSpec](https://github.com/Fission-AI/OpenSpec). La selección concreta puede actualizarse sin cambiar requisitos.
 
+## Vincular PR e issue
+
+La primera línea del PR nombra el issue:
+
+- `Closes #N` cuando, al unir el PR, el issue cumple todos sus criterios de cierre. GitHub lo cierra al unir a `main`.
+- `Parte de #N` cuando es un avance parcial, por ejemplo con prueba física o integración pendiente. El issue sigue abierto.
+
+GitHub solo procesa `Closes` en PR que se unen a la rama principal. En un PR apilado sobre otra rama, cerrar el issue a mano al unir la cadena, o repetir `Closes` en el PR que llega a `main`.
+
 ## Cierre de un issue
 
-Vincular PR, evidencia y escenario verificado; actualizar tasks.md y revisar con otro integrante. Archivar un cambio OpenSpec solo cuando esté completo. Un validador estructural aprobado no demuestra funcionamiento del software. Los hitos opcionales no tienen fecha y no amplían la entrega obligatoria.
+Vincular PR, evidencia y escenario verificado, y actualizar tasks.md. La revisión de código puede hacerla un agente; su resultado queda en un comentario del PR, y los hallazgos se corrigen o se derivan a un issue. Con eso, el líder cierra el issue (D10). Las pruebas físicas no se sustituyen por una revisión: si faltan, el PR usa `Parte de #N`. Archivar un cambio OpenSpec solo cuando esté completo. Un validador estructural aprobado no demuestra funcionamiento del software. Los hitos opcionales no tienen fecha y no amplían la entrega obligatoria.
 
 ## Cuentas del equipo
 
-Walther (`wmrDev`) y Winderson (`WindersonCastrillo`) están disponibles para asignación en GitHub. Las tareas de Maximiliano indican su responsabilidad nominal hasta confirmar su cuenta y acceso.
+Walther (`wmrDev`), Winderson (`WindersonCastrillo`) y Maximiliano (`MaxisotooH`) están disponibles para asignación en GitHub.

@@ -1,7 +1,7 @@
 # T00 · Base de aplicaciones y reproducción del diagnóstico USB
 
 - Tarea: [#1 T00](https://github.com/wmrDev/agentic-iot-pet/issues/1).
-- Fecha y responsable: 26 de noviembre de 2026, entorno de Walther. Revisión cruzada pendiente.
+- Fecha y responsable: 26 de noviembre de 2026, entorno de Walther. Revisión de código de agente en los PR #27 y #31 (27-11, D10).
 - Revisiones: `93529a3` para Android, Windows y simulador. `558ae67` para el diagnóstico ESP32-S3 del [PR #27](https://github.com/wmrDev/agentic-iot-pet/pull/27).
 - Entorno: Windows 25H2, build 26200.9974. [Versiones y preparación](../../equipo/ENTORNOS.md).
 - Resultado esperado: APK generada, aplicación Windows abre su ventana, simulador inicia y el diagnóstico genera una imagen para `esp32s3`.
@@ -20,4 +20,4 @@ La compilación Android instaló la plataforma 36 y Build Tools 35.0.0 con la li
 
 **Preparación de la prueba física Android:** Windows reconoció el INFINIX ZERO 30 5G por USB. ADB 37.0.1 no lo listó después de la autorización en el teléfono. Se verificó el SHA-256 de la APK de `93529a3` en el PC y se transfirió por MTP a Descargas como `Pet-IoT-T00-93529a3.apk`. Windows confirmó el nombre y tamaño de 10 296 304 bytes en el teléfono.
 
-**Pendientes:** cargar y observar el diagnóstico en la placa, revisión cruzada y reproducción desde otro clon. Queda por integrar el job de firmware con el PR #27. El job `gradle` del workflow de GitHub Actions ya se observó en verde en el PR #31 (`windows-2025`).
+**Pendientes:** cargar y observar el diagnóstico en la placa (H01, #7) e integrar el job de compilación de firmware en CI. La reproducción desde un clon limpio se hizo en #32. El job `gradle` del workflow de GitHub Actions ya se observó en verde en el PR #31 (`windows-2025`).

@@ -4,8 +4,8 @@
 - [x] 1.1 Revisar contrato, dependencias y alcance del issue [#4](https://github.com/wmrDev/agentic-iot-pet/issues/4).
 - [x] 1.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
 - [x] 1.3 Verificar un solo propietario, expiración a 6000 ms, reintentos sin duplicar efectos y ejemplos válidos e inválidos.
-- [ ] 1.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
-  - [Casos de prueba](../../../docs/pruebas/T01-contrato.md) y [resultado local](../../../docs/pruebas/resultados/2026-11-26-T01-contrato.md). Revisión cruzada pendiente.
+- [x] 1.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
+  - [Casos de prueba](../../../docs/pruebas/T01-contrato.md) y [resultado local](../../../docs/pruebas/resultados/2026-11-26-T01-contrato.md). Revisión de código de agente en el PR #33 (D10); 21 casos con 0 fallos en `8267a0b` y CI verde. La semántica de duplicados de un rechazo queda en #37.
 
 ## 2. T02 Identidad, emparejamiento USB y credenciales
 - [ ] 2.1 Revisar contrato, dependencias y alcance del issue [#5](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/5).
