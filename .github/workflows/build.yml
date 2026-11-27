@@ -28,6 +28,7 @@ jobs:
     # Official Espressif image with the same ESP-IDF version as the local environments.
     runs-on: ubuntu-24.04
     container: espressif/idf:v5.5.6
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -41,7 +42,13 @@ jobs:
           persist-credentials: false
       - name: Build ${{ matrix.project }} for esp32s3
         shell: bash
+        env:
+          PROJECT: ${{ matrix.project }}
         run: |
+          # The container runs as root over a checkout owned by the runner user;
+          # without this, ESP-IDF cannot read the commit for PROJECT_VER.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           . "$IDF_PATH/export.sh"
-          idf.py -C "${{ matrix.project }}" build
-          idf.py -C "${{ matrix.project }}" size
+          idf.py --version
+          idf.py -C "$PROJECT" build
+          idf.py -C "$PROJECT" size
