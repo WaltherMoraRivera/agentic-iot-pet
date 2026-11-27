@@ -10,6 +10,7 @@
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "pet_app.h"
 
 static const char *const TAG = "PRUEBA_USB";
 
@@ -80,6 +81,9 @@ void app_main(void)
         ESP_LOGE(TAG, "Failed to read physical flash size: %s",
                  esp_err_to_name(flash_error));
     }
+
+    // Comportamiento local de la mascota (T04) en su propia tarea.
+    pet_app_start();
 
     // Repite la identidad para quien abra el monitor después del arranque.
     TickType_t last_wake = xTaskGetTickCount();

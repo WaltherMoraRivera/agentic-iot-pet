@@ -1,0 +1,55 @@
+menu "Pet hardware"
+
+    comment "GPIO -1 means not connected: set only pins verified in the H01 bench"
+    comment "Rejected at boot: 19/20 (USB), 26-32 (flash/PSRAM), 22-25 and repeated pins"
+    comment "Strapping pins 0, 3, 45 and 46 are accepted with a warning"
+
+    config PET_TOUCH_GPIO
+        int "TTP223 I/O GPIO"
+        range -1 48
+        default -1
+
+    config PET_LED_GPIO
+        int "Listening LED GPIO"
+        range -1 48
+        default -1
+
+    config PET_MIC_BCLK_GPIO
+        int "INMP441 SCK / BCLK GPIO"
+        range -1 48
+        default -1
+
+    config PET_MIC_WS_GPIO
+        int "INMP441 WS GPIO"
+        range -1 48
+        default -1
+
+    config PET_MIC_DIN_GPIO
+        int "INMP441 SD GPIO"
+        range -1 48
+        default -1
+
+    config PET_AMP_BCLK_GPIO
+        int "MAX98357A BCLK GPIO"
+        range -1 48
+        default -1
+
+    config PET_AMP_LRC_GPIO
+        int "MAX98357A LRC GPIO"
+        range -1 48
+        default -1
+
+    config PET_AMP_DIN_GPIO
+        int "MAX98357A DIN GPIO"
+        range -1 48
+        default -1
+
+    config PET_SOUND_CALIBRATED
+        bool "Sound capture calibrated on this board"
+        default n
+        help
+            Leave off until the INMP441 level has been calibrated and recorded.
+            While off, the pet measures and stores the sound level but does not
+            react to it.
+
+endmenu
