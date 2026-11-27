@@ -3,6 +3,7 @@
 ## 1. T04 Mascota autónoma, temporizador, gestos y sonidos
 - [ ] 1.1 Revisar contrato, dependencias y alcance del issue [#8](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/8).
 - [ ] 1.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
+  - Parcial: lógica local (sesión, gestos, confirmación y prioridades) en `firmware/main/` con tests Unity en `firmware/test/`. Faltan sensores, audio, persistencia, API (T03) y ejecución en la placa.
 - [ ] 1.3 Verificar: Sesión continúa sin red; audio no genera bucle acústico; gestos y confirmaciones producen un solo efecto; montaje y consumo documentados.
 - [ ] 1.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
 
