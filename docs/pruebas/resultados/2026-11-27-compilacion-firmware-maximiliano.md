@@ -35,4 +35,4 @@
 - Estado: NO EJECUTADA en hardware. Compilación correcta; no equivale a una prueba física.
 - Evidencia: este registro. Los registros completos de compilación quedaron en el PC y no se suben.
 - Defecto asociado o ajuste acordado: ninguno.
-- Qué no demuestra esta prueba: carga en la placa, arranque, que los 61 tests pasen, funcionamiento de periféricos, las otras cuatro configuraciones de H01 (las compila la CI) ni compilaciones con pines configurados.
+- Qué no demuestra esta prueba: carga en la placa, arranque, que los 61 tests pasen, funcionamiento de periféricos, las otras cuatro configuraciones de H01 (Walther las compiló en `17fb5c6`; la CI solo compila la configuración por defecto) ni compilaciones con pines configurados.
