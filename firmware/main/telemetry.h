@@ -54,9 +54,16 @@ uint32_t telemetry_add_event(telemetry_t *t, int64_t uptime_ms, telemetry_event_
 uint32_t telemetry_first_sample_seq(const telemetry_t *t);
 uint32_t telemetry_first_event_seq(const telemetry_t *t);
 
+// A cursor is valid from 0 up to the last issued sequence. A larger one
+// (including UINT32_MAX) was never issued in this boot: the API must reject
+// it with INVALID_MESSAGE instead of reading.
+bool telemetry_sample_cursor_valid(const telemetry_t *t, uint32_t after_seq);
+bool telemetry_event_cursor_valid(const telemetry_t *t, uint32_t after_seq);
+
 // Copies up to max entries with seq > after_seq, in order. *gap is set when
 // entries after after_seq were already overwritten, so the reader can show
-// the real gap instead of a silent jump.
+// the real gap instead of a silent jump. An invalid cursor reads nothing and
+// sets no gap.
 size_t telemetry_read_samples(const telemetry_t *t, uint32_t after_seq, telemetry_sample_t *out,
                               size_t max, bool *gap);
 size_t telemetry_read_events(const telemetry_t *t, uint32_t after_seq, telemetry_event_t *out,

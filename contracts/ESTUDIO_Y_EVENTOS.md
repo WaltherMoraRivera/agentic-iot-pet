@@ -44,13 +44,18 @@ Mismo formato general que v1, con un tercer estado:
 
 La app **no** debe mostrar la orden como aplicada mientras esté pendiente. El resultado final se consulta en `GET /v1/state`.
 
-Reglas de la confirmación (ya implementadas en `pet_state.c`):
+Reglas de la confirmación implementadas en `pet_state.c`:
 
-- Dura 15 000 ms desde que la placa la crea.
+- Dura 15 000 ms desde que la placa la crea. Cuenta el instante en que se suelta el toque: un toque soltado dentro del plazo confirma aunque el gesto se informe unos 350 ms después.
 - Solo una a la vez: otra orden que requiera toque se rechaza con `CONFIRMATION_BUSY` mientras haya una pendiente.
-- Se cancela si cambia la época de control, si vence o si se pierde el permiso.
+- Se cancela si cambia la época de control o si vence.
 - Solo la confirma una pulsación que empezó **después** de crearla; un toque repetido no la aplica dos veces.
 - Mientras está pendiente, el toque no inicia estudio ni pide voz.
+
+Pendiente de implementar (no existe todavía en la placa):
+
+- Cancelar la confirmación al perderse el permiso de control sin cambio de época. Hoy solo la cancela un cambio de época (`pet_on_epoch_change`); depende del permiso de T03.
+- Una señal en la placa (LED, sonido o pantalla) mientras hay una confirmación pendiente, para que el usuario sepa que debe tocar.
 
 Un reintento con el mismo `request_id` devuelve la respuesta original, como en v1. Si la confirmación ya se resolvió, `GET /v1/state` muestra su estado final.
 
@@ -112,6 +117,9 @@ Para recuperar datos tras un corte (P16, #28). Solo clientes autenticados; no re
 - Repetir la misma página devuelve las mismas entradas: la app deduplica por `boot_id` y `seq`.
 - `sound_level` es relativo a la escala digital (0 a 1), no dB.
 - Evento: `{seq, uptime_ms, kind, value}` con `kind` = `touch`, `sound_reaction`, `study_changed` o `confirmation`.
+- `after` mayor que la última secuencia emitida en este arranque (incluido 4 294 967 295) se rechaza con `INVALID_MESSAGE`; la placa ya lo detecta con `telemetry_sample_cursor_valid` y `telemetry_event_cursor_valid`.
+
+Pendiente para T03/T05: el búfer de telemetría no tiene exclusión mutua; la API que lo lea desde otra tarea debe protegerlo. `boot_id` todavía no existe en la placa.
 
 ## Pendiente de decidir con T03
 

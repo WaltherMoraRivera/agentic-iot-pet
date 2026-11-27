@@ -1,5 +1,6 @@
 #include "telemetry.h"
 
+#include <stdint.h>
 #include <string.h>
 
 void telemetry_init(telemetry_t *t)
@@ -19,13 +20,20 @@ static uint32_t first_seq(uint32_t next, uint32_t capacity)
     return written > capacity ? next - capacity : 1;
 }
 
+// Valid cursors are 0..next-1 (the last issued sequence). UINT32_MAX is
+// checked on its own so that after_seq + 1 never wraps to 0.
+static bool cursor_valid(uint32_t next, uint32_t after_seq)
+{
+    return after_seq != UINT32_MAX && after_seq < next;
+}
+
 // Range [from, to) of sequences to copy for a read after `after_seq`.
 static size_t plan_read(uint32_t next, uint32_t capacity, uint32_t after_seq, size_t max,
                         uint32_t *from, bool *gap)
 {
     const uint32_t first = first_seq(next, capacity);
     *gap = false;
-    if (first == 0 || after_seq + 1 >= next) {
+    if (!cursor_valid(next, after_seq) || first == 0 || after_seq + 1 >= next) {
         return 0;
     }
     uint32_t start = after_seq + 1;
@@ -70,6 +78,16 @@ uint32_t telemetry_first_sample_seq(const telemetry_t *t)
 uint32_t telemetry_first_event_seq(const telemetry_t *t)
 {
     return first_seq(t->event_next_seq, TELEMETRY_EVENT_CAPACITY);
+}
+
+bool telemetry_sample_cursor_valid(const telemetry_t *t, uint32_t after_seq)
+{
+    return cursor_valid(t->sample_next_seq, after_seq);
+}
+
+bool telemetry_event_cursor_valid(const telemetry_t *t, uint32_t after_seq)
+{
+    return cursor_valid(t->event_next_seq, after_seq);
 }
 
 size_t telemetry_read_samples(const telemetry_t *t, uint32_t after_seq, telemetry_sample_t *out,

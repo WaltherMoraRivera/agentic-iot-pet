@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "sound_reaction.h"
 #include "telemetry.h"
@@ -215,6 +216,55 @@ static void test_telemetry_event_overflow_counted(void)
     TEST_ASSERT_EQUAL_UINT32(3, ev[0].seq);
 }
 
+// A cursor beyond the last issued sequence comes from another boot or a
+// broken client: it is flagged invalid and reads nothing, without a gap.
+static void test_telemetry_rejects_cursor_beyond_last_seq(void)
+{
+    static telemetry_t t;
+    telemetry_init(&t);
+    TEST_ASSERT_TRUE(telemetry_sample_cursor_valid(&t, 0));
+    TEST_ASSERT_FALSE(telemetry_sample_cursor_valid(&t, 1));
+    for (int i = 0; i < 5; ++i) {
+        telemetry_add_sample(&t, i * 1000, 0.1f, 0);
+    }
+    TEST_ASSERT_TRUE(telemetry_sample_cursor_valid(&t, 5));
+    TEST_ASSERT_FALSE(telemetry_sample_cursor_valid(&t, 6));
+
+    telemetry_sample_t out[4];
+    bool gap = true;
+    TEST_ASSERT_EQUAL(0, telemetry_read_samples(&t, 5, out, 4, &gap));
+    TEST_ASSERT_FALSE(gap);
+    gap = true;
+    TEST_ASSERT_EQUAL(0, telemetry_read_samples(&t, 6, out, 4, &gap));
+    TEST_ASSERT_FALSE(gap);
+
+    telemetry_add_event(&t, 0, TELEMETRY_EVENT_TOUCH, 1);
+    TEST_ASSERT_TRUE(telemetry_event_cursor_valid(&t, 1));
+    TEST_ASSERT_FALSE(telemetry_event_cursor_valid(&t, 2));
+}
+
+// after_seq + 1 must not wrap to 0 and return the whole buffer as a gap.
+static void test_telemetry_max_cursor_does_not_wrap(void)
+{
+    static telemetry_t t;
+    telemetry_init(&t);
+    for (int i = 0; i < 3; ++i) {
+        telemetry_add_sample(&t, i * 1000, 0.1f, 0);
+        telemetry_add_event(&t, i * 1000, TELEMETRY_EVENT_TOUCH, 1);
+    }
+    TEST_ASSERT_FALSE(telemetry_sample_cursor_valid(&t, UINT32_MAX));
+    TEST_ASSERT_FALSE(telemetry_event_cursor_valid(&t, UINT32_MAX));
+
+    telemetry_sample_t out[4];
+    bool gap = true;
+    TEST_ASSERT_EQUAL(0, telemetry_read_samples(&t, UINT32_MAX, out, 4, &gap));
+    TEST_ASSERT_FALSE(gap);
+    telemetry_event_t ev[4];
+    gap = true;
+    TEST_ASSERT_EQUAL(0, telemetry_read_events(&t, UINT32_MAX, ev, 4, &gap));
+    TEST_ASSERT_FALSE(gap);
+}
+
 void run_sound_reaction_tests(void)
 {
     RUN_TEST(test_sound_rejects_invalid_limits);
@@ -234,4 +284,6 @@ void run_telemetry_tests(void)
     RUN_TEST(test_telemetry_overflow_is_counted_and_reported_as_gap);
     RUN_TEST(test_telemetry_events_are_separate_from_samples);
     RUN_TEST(test_telemetry_event_overflow_counted);
+    RUN_TEST(test_telemetry_rejects_cursor_beyond_last_seq);
+    RUN_TEST(test_telemetry_max_cursor_does_not_wrap);
 }
