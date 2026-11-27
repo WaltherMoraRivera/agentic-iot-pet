@@ -1,0 +1,94 @@
+menu "H01 bench"
+
+    choice H01_TEST
+        prompt "Test to run"
+        default H01_TEST_TOUCH_LED
+        help
+            One module per flash, as H01 requires. Rebuild and flash to change.
+
+        config H01_TEST_TOUCH_LED
+            bool "TTP223 touch and LED"
+        config H01_TEST_I2C_SCAN
+            bool "I2C bus scan (OLED address)"
+        config H01_TEST_OLED
+            bool "OLED border and two eyes"
+        config H01_TEST_MIC
+            bool "INMP441 relative level"
+        config H01_TEST_AMP
+            bool "MAX98357A test tone"
+    endchoice
+
+    comment "GPIO -1 means not configured: set only pins verified on the real board"
+
+    menu "Touch and LED"
+        config H01_TOUCH_GPIO
+            int "TTP223 I/O GPIO"
+            range -1 48
+            default -1
+        config H01_LED_GPIO
+            int "LED GPIO (through resistor)"
+            range -1 48
+            default -1
+    endmenu
+
+    menu "OLED (I2C)"
+        config H01_I2C_SDA_GPIO
+            int "SDA GPIO"
+            range -1 48
+            default -1
+        config H01_I2C_SCL_GPIO
+            int "SCL GPIO"
+            range -1 48
+            default -1
+        config H01_OLED_ADDR
+            hex "OLED 7-bit address (use the I2C scan result)"
+            range 0x00 0x7F
+            default 0x00
+        choice H01_OLED_CONTROLLER
+            prompt "Controller to try"
+            default H01_OLED_SH1106
+            help
+                Do not deduce it from the product name: if the border is shifted
+                or cut by two columns, try the other controller and record it.
+            config H01_OLED_SH1106
+                bool "SH1106 (132-column RAM, offset 2)"
+            config H01_OLED_SSD1306
+                bool "SSD1306 (128-column RAM, offset 0)"
+        endchoice
+    endmenu
+
+    menu "Microphone INMP441 (I2S RX)"
+        config H01_MIC_BCLK_GPIO
+            int "SCK / BCLK GPIO"
+            range -1 48
+            default -1
+        config H01_MIC_WS_GPIO
+            int "WS GPIO"
+            range -1 48
+            default -1
+        config H01_MIC_DIN_GPIO
+            int "SD (data out of the mic) GPIO"
+            range -1 48
+            default -1
+    endmenu
+
+    menu "Amplifier MAX98357A (I2S TX)"
+        config H01_AMP_BCLK_GPIO
+            int "BCLK GPIO"
+            range -1 48
+            default -1
+        config H01_AMP_LRC_GPIO
+            int "LRC GPIO"
+            range -1 48
+            default -1
+        config H01_AMP_DIN_GPIO
+            int "DIN GPIO"
+            range -1 48
+            default -1
+        config H01_AMP_VOLUME_PCT
+            int "Tone amplitude, percent of full scale"
+            range 1 50
+            default 10
+    endmenu
+
+endmenu
