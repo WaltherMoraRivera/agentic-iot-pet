@@ -40,6 +40,13 @@ menu "H01 bench"
             int "SCL GPIO"
             range -1 48
             default -1
+        config H01_I2C_SPEED_HZ
+            int "I2C SCL speed (Hz)"
+            range 10000 400000
+            default 100000
+            help
+                100 kHz tolerates long jumpers and weak pull-ups on the bench.
+                Raise it to 400000 only after the OLED works at 100 kHz.
         config H01_OLED_ADDR
             hex "OLED 7-bit address (use the I2C scan result)"
             range 0x00 0x7F

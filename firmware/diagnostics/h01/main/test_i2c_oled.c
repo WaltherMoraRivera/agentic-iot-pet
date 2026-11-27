@@ -16,8 +16,10 @@ static const char *const TAG = "H01_I2C";
 
 #if CONFIG_H01_OLED_SH1106
 #define OLED_COL_OFFSET 2
+#define OLED_INIT_NAME "SH1106 (DC-DC on, column offset 2)"
 #else
 #define OLED_COL_OFFSET 0
+#define OLED_INIT_NAME "SSD1306 (charge pump on, page mode, column offset 0)"
 #endif
 
 static i2c_master_bus_handle_t open_bus(void)
@@ -177,7 +179,7 @@ void test_oled_run(void)
     const i2c_device_config_t dev_config = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address = addr,
-        .scl_speed_hz = 400000,
+        .scl_speed_hz = CONFIG_H01_I2C_SPEED_HZ,
     };
     i2c_master_dev_handle_t dev = NULL;
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &dev_config, &dev));
@@ -187,6 +189,8 @@ void test_oled_run(void)
     fill_circle(40, 30, 10);
     fill_circle(88, 30, 10);
 
+    ESP_LOGI(TAG, "Sending init sequence: %s at 0x%02x, %d Hz", OLED_INIT_NAME, addr,
+             CONFIG_H01_I2C_SPEED_HZ);
     esp_err_t err = oled_init(dev);
     if (err == ESP_OK) {
         err = oled_flush(dev);

@@ -47,6 +47,8 @@ idf.py -p COM12 flash monitor
 
 En `menuconfig` → **H01 bench**: elegir la prueba en *Test to run* y escribir solo los pines del módulo que se va a probar. El puerto `COM12` es el que vio Winderson y puede cambiar; consultar `Get-CimInstance Win32_SerialPort`.
 
+La velocidad del bus I2C se ajusta en *OLED (I2C)* → `I2C SCL speed (Hz)`. Por defecto es 100 kHz, que tolera jumpers largos y pull-ups débiles; subir a 400 kHz solo después de que la OLED funcione a 100 kHz, y anotar la velocidad en el registro.
+
 Si el puerto se desconecta solo, entrar en modo programación (mantener BOOT, pulsar y soltar RESET, soltar BOOT). Esa incidencia está abierta en el [registro de T00](../pruebas/resultados/2026-11-25-T00-prueba-usb.md).
 
 Antes de la primera carga en una placa con firmware original, seguir el respaldo de `docs/equipo/TRASPASO.md`.
