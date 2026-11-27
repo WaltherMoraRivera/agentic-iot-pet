@@ -21,6 +21,18 @@ Por cada módulo, y siempre con la placa desconectada:
 3. Comprobar que no hay continuidad entre 3V3 y GND, ni entre 5V y GND.
 4. Conectar solo ese módulo. Desconectar los jumpers del resto.
 
+### Alimentación por módulo
+
+Los GPIO del ESP32-S3 no toleran 5 V. Ningún módulo cuya salida llegue a un GPIO se alimenta a 5 V.
+
+| Módulo | Alimentación | Conexiones obligatorias |
+|---|---|---|
+| OLED 128×64 (I2C) | 3V3 de la placa, nunca 5 V | GND común. Con 5 V las resistencias de pull-up del módulo llevarían SDA y SCL a 5 V |
+| TTP223 | 3V3 de la placa, nunca 5 V | GND común. Su salida I/O va directa al GPIO |
+| INMP441 | 3V3 de la placa, nunca 5 V (máximo absoluto 3,6 V) | GND común. **L/R a GND** para usar el canal izquierdo que lee el firmware |
+| MAX98357A | Según su módulo: 5 V del USB o 3V3 | GND común con la placa. Parlante solo entre las salidas del módulo |
+| LED | GPIO a través de resistencia | **Resistencia de 330 Ω en serie**; cátodo a GND |
+
 ## Compilar y cargar
 
 Desde la terminal ESP-IDF (en Windows, el perfil «ESP-IDF 5.5.6» que crea el instalador):
@@ -47,7 +59,7 @@ Las cinco imprimen al arrancar la identificación de la placa y todos los pines 
 |---|---|---|---|
 | TTP223 touch and LED | `TTP223 I/O GPIO`, `LED GPIO` | Una línea `press` y una `release` por cada contacto, con su duración en ms. El LED sigue al contacto | Un solo par por toque; sin pulsos sin tocar durante 60 s. Anotar duraciones de toque breve, doble toque y toque sostenido: T04 las necesita para calibrar los gestos |
 | I2C bus scan | `SDA GPIO`, `SCL GPIO` | `ACK at 0x..` por cada dispositivo | Una dirección por OLED conectada. Anotar la dirección real |
-| OLED border and two eyes | SDA, SCL, `OLED address` y *Controller to try* | Borde de 1 px en los cuatro lados y dos ojos | Los cuatro bordes visibles, ninguno cortado ni doble. Si falta o sobra una franja de dos columnas, repetir con el otro controlador |
+| OLED border and two eyes | SDA, SCL, `OLED address` y *Controller to try* | Borde de 1 px en los cuatro lados y dos ojos | Los cuatro bordes visibles, ninguno cortado ni doble. Si falta o sobra una franja de dos columnas, repetir con el otro controlador. Si la pantalla queda negra aunque el escaneo dé ACK, repetir con la opción SSD1306; el log indica qué secuencia de inicio se envió |
 | INMP441 relative level | `SCK`, `WS`, `SD` | Cinco líneas por segundo con `rms`, `peak`, `dc` y `zeros` | En silencio, `rms` bajo y estable; con una palmada a distancia fija, `peak` sube. `zeros` igual al total indica cableado o alimentación incorrectos |
 | MAX98357A test tone | `BCLK`, `LRC`, `DIN`, volumen | Tono de 400 Hz, 1 s sí y 1 s no | Tono limpio y sin reinicios. Anotar `reset_reason` si la placa se reinicia al sonar |
 
