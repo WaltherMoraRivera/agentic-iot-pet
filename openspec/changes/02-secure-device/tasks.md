@@ -24,4 +24,5 @@
 - [ ] 4.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
 - [ ] 4.3 Verificar: Registrar lote, memoria, OLED/controlador, pines, TTP223, INMP441, LED y amplificador; medir continuidad y alimentación antes del montaje completo.
 - [ ] 4.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
+  - Avance 2026-11-25 (parcial): mediciones eléctricas preliminares de TTP223 y LED; placa identificada. Pendiente: confirmar pines, continuidad, prueba por GPIO, OLED, INMP441, amplificador y revisión. [Evidencia](../../../docs/pruebas/resultados/2026-11-25-H01-preliminar.md).
 
