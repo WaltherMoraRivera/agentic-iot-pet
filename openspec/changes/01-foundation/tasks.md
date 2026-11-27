@@ -4,8 +4,8 @@
 - [x] 1.1 Revisar contrato, dependencias y alcance del issue [#1](https://github.com/wmrDev/agentic-iot-pet/issues/1).
 - [x] 1.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
 - [x] 1.3 Verificar: Las apps abren en Android/Windows y firmware compila para S3; versiones y comandos quedan registrados.
-- [ ] 1.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
-  - 2026-11-27: PR #27 y #31 unidos a `main` con revisión de código de agente (D10). Build reproducido desde un clon limpio por Winderson (#32). Pendiente para cerrar: job de compilación de firmware en CI (paso 5 del plan T00). La carga en la placa se registra en H01 (#7).
+- [x] 1.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
+  - 2026-11-27: PR #27 y #31 unidos a `main` con revisión de código de agente (D10). Build reproducido desde un clon limpio por Winderson (#32). Job `firmware` en CI (PR #39) con `espressif/idf:v5.5.6`: producto, tests de Unity y banco H01 compilan para `esp32s3` ([ejecución](https://github.com/wmrDev/agentic-iot-pet/actions/runs/46013730537)). La carga en la placa se registra en H01 (#7).
   - Avance 2026-11-25 (parcial): firmware PRUEBA_USB implementado y compilado para S3 (`424032f`; en Windows, `b951b8f`). Pendiente: prueba en placa. [Evidencia](../../../docs/pruebas/resultados/2026-11-25-T00-prueba-usb.md).
   - Avance parcial en `codex/t00-apps`: APK instalada y abierta en el INFINIX ZERO 30 5G, ventana Windows observada y simulador arrancado. [Registro T00](../../../docs/pruebas/resultados/2026-11-26-T00-base-aplicaciones.md).
 

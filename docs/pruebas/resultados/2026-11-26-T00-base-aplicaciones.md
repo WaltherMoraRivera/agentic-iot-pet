@@ -20,4 +20,6 @@ La compilación Android instaló la plataforma 36 y Build Tools 35.0.0 con la li
 
 **Preparación de la prueba física Android:** Windows reconoció el INFINIX ZERO 30 5G por USB. ADB 37.0.1 no lo listó después de la autorización en el teléfono. Se verificó el SHA-256 de la APK de `93529a3` en el PC y se transfirió por MTP a Descargas como `Pet-IoT-T00-93529a3.apk`. Windows confirmó el nombre y tamaño de 10 296 304 bytes en el teléfono.
 
-**Pendientes:** cargar y observar el diagnóstico en la placa (H01, #7) e integrar el job de compilación de firmware en CI. La reproducción desde un clon limpio se hizo en #32. El job `gradle` del workflow de GitHub Actions ya se observó en verde en el PR #31 (`windows-2025`).
+**CI (27-11):** en el PR #39 pasaron el job `gradle` (`windows-2025`) y el job `firmware` en `espressif/idf:v5.5.6`, que compila `firmware`, `firmware/test` y `firmware/diagnostics/h01` para `esp32s3` con la versión del commit en `PROJECT_VER` ([ejecución](https://github.com/wmrDev/agentic-iot-pet/actions/runs/46013730537)).
+
+**Pendiente:** cargar y observar el diagnóstico en la placa (H01, #7). La reproducción desde un clon limpio se hizo en #32.

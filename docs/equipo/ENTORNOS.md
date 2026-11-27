@@ -54,7 +54,7 @@ En cada terminal nueva, activar el entorno antes de `idf.py`:
 
 El instalador también deja en el escritorio un acceso directo a PowerShell con el entorno ya activado. `eim` no queda en PATH hasta abrir una terminal nueva.
 
-La compilación local produjo la APK de depuración y el código de escritorio. El job `gradle` del workflow de GitHub Actions ya pasó en `windows-2025` con el mismo comando. No hay versiones de producto validadas en hardware en este momento.
+La compilación local produjo la APK de depuración y el código de escritorio. El job `gradle` del workflow de GitHub Actions ya pasó en `windows-2025` con el mismo comando. El job `firmware` compila los tres proyectos ESP-IDF en la imagen `espressif/idf:v5.5.6`. No hay versiones de producto validadas en hardware en este momento.
 
 ## Comandos de T00
 
