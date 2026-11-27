@@ -8,7 +8,7 @@
 | Git | Detectado en PATH | Por verificar | Por verificar |
 | JDK | Detectado JDK 17 en PATH; no validado con el proyecto | Por verificar | Por verificar |
 | Android Studio y SDK | Por verificar | Por verificar | Por verificar |
-| ESP-IDF y herramientas | No encontrados en PATH; instalación no descartada | Por verificar | Por verificar |
+| ESP-IDF y herramientas | No encontrados en PATH; instalación no descartada | Por verificar | Linux: v5.5.6 verificado (25-11); Windows: por verificar |
 | Teléfono | INFINIX ZERO 30 5G, XOS 14.5.0 | Por identificar | Por identificar |
 | Android real / API level | Por registrar | Por registrar | Por registrar |
 
@@ -33,15 +33,15 @@ T00 completará esta tabla con versiones exactas probadas y comandos observados,
 | Gradle Wrapper, plugins Android y Kotlin | A registrar en T00 |
 | Compose Multiplatform | A registrar en T00 |
 | Android minSdk / compileSdk / targetSdk | A fijar con dispositivos reales y dependencias |
-| ESP-IDF y toolchain | A registrar en T00 |
+| ESP-IDF y toolchain | Parcial (25-11, CachyOS): ESP-IDF v5.5.6, Xtensa GCC 14.2.0, Python 3.14.10, CMake 4.5.1, Ninja 1.13.2, esptool 4.14.0; compila `firmware/`. [Evidencia](../pruebas/resultados/2026-11-25-T00-prueba-usb.md) |
 | Room, SQLite y KSP | A fijar en T05 con prueba Android/Windows |
 | Sistema Windows de referencia | A registrar en T00 |
 
-No hay versiones de producto validadas en este momento. El JDK detectado no obliga a elegirlo si la combinación seleccionada requiere otro compatible.
+No hay versiones de producto validadas en hardware en este momento. El JDK detectado no obliga a elegirlo si la combinación seleccionada requiere otro compatible.
 
 ## Comandos previstos después de T00
 
-Se ejecutan desde la raíz, salvo firmware. **Todavía no existen los wrappers ni estos proyectos; no ejecutar como si esta preparación ya compilara.**
+Se ejecutan desde la raíz, salvo firmware. **Todavía no existen los wrappers ni los proyectos Gradle; solo `idf.py build` funciona hoy, verificado únicamente en el Linux (CachyOS) de Winderson, con el código de `424032f`; en Windows sigue pendiente.**
 
 | Objetivo | Windows / PowerShell | Linux |
 |---|---|---|
