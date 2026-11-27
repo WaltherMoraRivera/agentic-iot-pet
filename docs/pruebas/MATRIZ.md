@@ -2,6 +2,8 @@
 
 Estado inicial: **todas las pruebas de producto están NO EJECUTADAS**. Esta tabla organiza trabajo; no registra aprobaciones anticipadas. Crear un registro por ejecución con la [plantilla](PLANTILLA_RESULTADO.md).
 
+El subconjunto de la Evaluación 2 tiene fichas propias en [eva02/](eva02/README.md); sus resultados se registran igual, con la plantilla.
+
 Estados admitidos: `NO EJECUTADA`, `FALLÓ`, `PASÓ EN SIMULADOR`, `PASÓ EN HARDWARE`, `LIMITACIÓN ACORDADA`. Un mock de micrófono o proveedor nunca equivale a una llamada o captura real.
 
 | ID | Escenario y procedimiento | Resultado exigido | Tarea / responsable |
