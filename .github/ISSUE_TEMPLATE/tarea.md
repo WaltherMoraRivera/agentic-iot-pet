@@ -23,7 +23,7 @@ Archivos previstos, contrato consumido/producido y límites de la tarea.
 - [ ] Comportamiento y casos de error comprobados.
 - [ ] Comandos ejecutados y resultados registrados.
 - [ ] Pruebas físicas identificadas como ejecutadas o pendientes.
-- [ ] Revisión por otra persona y explicación del responsable.
+- [ ] Revisión de código registrada en el PR (agente o integrante); el responsable puede explicar el cambio.
 
 ## Evidencia
 
