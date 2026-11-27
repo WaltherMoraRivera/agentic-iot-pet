@@ -14,6 +14,9 @@ static const char *const TAG = "H01_MIC";
 #define WINDOW_SAMPLES (SAMPLE_RATE_HZ / 5)
 #define CHUNK_SAMPLES 256
 #define FULL_SCALE_24 8388608.0f
+// INMP441 needs 2^18 SCK cycles to start (256 ms at 1.024 MHz SCK); its
+// output is zero until then, so the first 300 ms are discarded.
+#define STARTUP_DISCARD_SAMPLES (SAMPLE_RATE_HZ * 300 / 1000)
 
 // Only the level of each window is computed and logged. Samples stay in a
 // reused buffer and are never stored or transmitted.
@@ -49,6 +52,18 @@ void test_mic_run(void)
     ESP_LOGI(TAG, "Levels are relative to digital full scale (0..1), not dB SPL.");
     static int32_t chunk[CHUNK_SAMPLES];
     uint32_t window = 0;
+
+    int discarded = 0;
+    while (discarded < STARTUP_DISCARD_SAMPLES) {
+        size_t bytes = 0;
+        const esp_err_t err = i2s_channel_read(rx, chunk, sizeof(chunk), &bytes, 1000);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "I2S read failed: %s", esp_err_to_name(err));
+            continue;
+        }
+        discarded += (int)(bytes / sizeof(chunk[0]));
+    }
+    ESP_LOGI(TAG, "Discarded %d startup samples (300 ms).", discarded);
 
     for (;;) {
         double sum = 0.0;
@@ -87,9 +102,11 @@ void test_mic_run(void)
         }
         const float rms = (float)sqrt(variance) / FULL_SCALE_24;
         const float pk = (float)peak / FULL_SCALE_24;
+        // Signed offset on the same full-scale range (-1..1).
+        const float dc = (float)mean / FULL_SCALE_24;
 
-        ESP_LOGI(TAG, "window=%" PRIu32 " rms=%.5f peak=%.5f dc=%.0f zeros=%d/%d", window, rms, pk,
-                 mean, zeros, taken);
+        ESP_LOGI(TAG, "window=%" PRIu32 " rms=%.5f peak=%.5f dc=%+.5f zeros=%d/%d", window, rms,
+                 pk, dc, zeros, taken);
         if (zeros == taken) {
             ESP_LOGW(TAG, "All samples are zero: check SD wiring, L/R to GND and 3.3 V supply.");
         }

@@ -65,7 +65,7 @@ Las cinco imprimen al arrancar la identificación de la placa y todos los pines 
 | INMP441 relative level | `SCK`, `WS`, `SD` | Cinco líneas por segundo con `rms`, `peak`, `dc` y `zeros` | En silencio, `rms` bajo y estable; con una palmada a distancia fija, `peak` sube. `zeros` igual al total indica cableado o alimentación incorrectos |
 | MAX98357A test tone | `BCLK`, `LRC`, `DIN`, volumen | Tono de 400 Hz, 1 s sí y 1 s no | Tono limpio y sin reinicios. Anotar `reset_reason` si la placa se reinicia al sonar |
 
-El micrófono informa niveles relativos a la escala digital (0 a 1), no dB SPL. Las muestras se usan solo para calcular el nivel de cada ventana: no se guardan ni se transmiten.
+El micrófono informa niveles relativos a la escala digital, no dB SPL: `rms` y `peak` van de 0 a 1 y `dc` es el desplazamiento con signo en la misma escala (−1 a 1). Los primeros 300 ms tras habilitar I2S se descartan, porque el INMP441 tarda 2^18 ciclos de SCK (unos 256 ms) en arrancar y mientras tanto entrega ceros. Las muestras se usan solo para calcular el nivel de cada ventana: no se guardan ni se transmiten.
 
 El amplificador va en I2S1 y el micrófono en I2S0, separados como indica T04. Empezar con el volumen por defecto (10 %). El parlante va entre las salidas del módulo; ninguna salida a GND.
 
