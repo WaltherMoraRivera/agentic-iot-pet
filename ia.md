@@ -21,6 +21,8 @@ Qué se pidió y qué se corrigió. No incluir claves, datos privados ni convers
 
 **Evidencia:** `docs/pruebas/resultados/2026-11-27-V01-mockup.md`.
 
-**Pendiente de personas:** revisión de Walther, prueba en el OLED real y actualizar la nota «descargar y abrir» de `docs/superpowers/specs/2026-11-25-cara-mascota-design.md`.
+**Pendiente de personas:** revisión de Walther, prueba en el OLED real.
 
 - 27-11-2026: Winderson aclaró que el trabajo debe ejecutarlo Codex directamente. Se canceló la tarea 2168 de locks y Codex integró la corrección, ajustó la espera de navegación de la prueba y verificó 18/18 en Chromium.
+
+- 27-11-2026: Codex aplicó directamente la revisión de Walther sobre gestos T04, confirmación, pausa, interrupción y captura. El boceto vuelve a funcionar como HTML independiente y comparte el dibujo con el mockup. La suite de Chromium pasó 20/20.
