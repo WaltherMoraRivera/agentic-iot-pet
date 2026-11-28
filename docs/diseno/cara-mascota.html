@@ -7,120 +7,24 @@
 <h2>Cara de la mascota: estilo B (boceto)</h2>
 <p class="subtitle">Sigue siendo 128×64 real en blanco y negro. Ojos lisos, párpados, mirada y rebote.</p>
 <div id="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px"></div>
+<script src="cara.js"></script>
 <script>
 (() => {
   const grid = document.getElementById('grid');
-  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const make = (name, draw) => {
+  const shown = Object.entries(PetFace.faces).map(([key, face]) => {
     const f = document.createElement('figure'); f.style.margin = '0';
     const c = document.createElement('canvas'); c.width = 128; c.height = 64;
     c.style.cssText = 'width:100%;image-rendering:pixelated;background:#000;border:6px solid #222;border-radius:6px';
-    c.setAttribute('role', 'img'); c.setAttribute('aria-label', name);
-    const t = document.createElement('figcaption'); t.innerHTML = '<strong>' + name + '</strong>';
+    c.setAttribute('role', 'img'); c.setAttribute('aria-label', face.label);
+    const t = document.createElement('figcaption'), name = document.createElement('strong');
+    name.textContent = face.label; t.append(name);
     f.append(c, t); grid.append(f);
-    return { g: c.getContext('2d'), draw };
-  };
-
-  // Búfer de 1 bit: se pinta por píxel para que no haya suavizado, igual que en el OLED.
-  let buf;
-  const paint = (x0, y0, x1, y1, v, inside) => {
-    for (let y = Math.max(0, y0 | 0); y <= Math.min(63, y1); y++)
-      for (let x = Math.max(0, x0 | 0); x <= Math.min(127, x1); x++)
-        if (inside(x, y)) buf[y * 128 + x] = v;
-  };
-  const box = (cx, cy, w, h, r, v = 1) => paint(cx - w / 2 - 1, cy - h / 2 - 1, cx + w / 2 + 1, cy + h / 2 + 1, v, (x, y) => {
-    if (Math.abs(x - cx) > w / 2 || Math.abs(y - cy) > h / 2) return false;
-    const rr = Math.min(r, w / 2, h / 2);
-    const dx = Math.max(Math.abs(x - cx) - (w / 2 - rr), 0), dy = Math.max(Math.abs(y - cy) - (h / 2 - rr), 0);
-    return dx * dx + dy * dy <= rr * rr;
+    return { c, key };
   });
-  const ell = (cx, cy, rx, ry, v = 1) => paint(cx - rx, cy - ry, cx + rx, cy + ry, v, (x, y) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1);
-  const line = (ax, ay, bx, by, t, v = 1) => paint(Math.min(ax, bx) - t, Math.min(ay, by) - t, Math.max(ax, bx) + t, Math.max(ay, by) + t, v, (x, y) => {
-    const dx = bx - ax, dy = by - ay;
-    const k = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy || 1)));
-    return Math.hypot(x - ax - k * dx, y - ay - k * dy) <= t / 2;
-  });
-
-  // Ojo liso: bloque redondeado.
-  const eye = (cx, cy, w, h) => {
-    box(cx, cy, w, h, 10);
-  };
-  const pair = (cx, cy, w, h) => { eye(40 + cx, cy, w, h); eye(88 + cx, cy, w, h); };
-  // Parpadeo: 1 = abierto, cae a 0.1 durante un instante cada ciclo.
-  const blink = (t, every = 3200) => { const p = t % every; return p < 180 ? Math.max(0.1, Math.abs(p - 90) / 90) : 1; };
-  const joy = (t) => {
-    const b = Math.sin(t / 140) * 2;
-    for (const x of [40, 88]) { box(x, 30 + b, 30, 28, 12); ell(x, 46 + b, 23, 17, 0); }
-    for (const x of [14, 114]) for (let i = 0; i < 3; i++) line(x - 6 + i * 5, 50, x - 9 + i * 5, 55, 1);
-  };
-  const star = (x, y, s) => { line(x - s, y, x + s, y, 1); line(x, y - s, x, y + s, 1); };
-  const heart = (x, y) => { ell(x - 3, y, 3.5, 3.5); ell(x + 3, y, 3.5, 3.5); for (let i = 0; i <= 7; i++) line(x - 6 + i, y + 1 + i, x + 6 - i, y + 1 + i, 1); };
-
-  const faces = [
-    make('Normal: mira a los lados y parpadea', t => {
-      const look = [0, 0, -8, -8, 0, 8, 8, 0][Math.floor(t / 900) % 8];
-      pair(look, 32, 28, 36 * blink(t));
-    }),
-    make('Contenta: rebota y se sonroja', t => joy(t)),
-    make('Enamorada: caricia larga', t => {
-      const s = 1 + Math.sin(t / 160) * 0.12;
-      for (const x of [40, 88]) {
-        paint(x - 18, 14, x + 18, 50, 1, (px, py) => {
-          const a = (px - x) / (14 * s), b = -(py - 30) / (14 * s);
-          return (a * a + b * b - 1) ** 3 - a * a * b * b * b <= 0;
-        });
-      }
-      heart(64, 52 - (t / 60) % 40);
-    }),
-    make('Sorprendida: salto', t => {
-      const k = t % 2000 < 200 ? 1.15 : 1;
-      pair(0, 33, 30 * k, 44 * k);
-      line(64, 4, 64, 14, 3); ell(64, 21, 2, 2);
-    }),
-    make('Con sueño: cabecea', t => {
-      const y = 38 + Math.sin(t / 700) * 3;
-      pair(0, y, 30, 18); box(40, y - 9, 34, 14, 0, 0); box(88, y - 9, 34, 14, 0, 0);
-      const p = (t / 90) % 24;
-      for (const [x0, y0, s] of [[104, 22, 4], [114, 12, 6]]) {
-        const yy = y0 - p / 4;
-        line(x0, yy, x0 + s, yy, 1); line(x0 + s, yy, x0, yy + s, 1); line(x0, yy + s, x0 + s, yy + s, 1);
-      }
-    }),
-    make('Concentrada: ceño y avance', t => {
-      const h = 30 * blink(t, 4500);
-      pair(0, 30, 28, h);
-      // Los párpados inclinados dan la expresión de concentración.
-      for (let i = 0; i < 12; i++) { line(24, 6 + i, 58, 15 + i, 1, 0); line(70, 15 + i, 104, 6 + i, 1, 0); }
-      line(24, 13, 56, 22, 3); line(72, 22, 104, 13, 3);
-      box(64, 58, 120, 1, 0); box(4 + ((t / 80) % 120) / 2, 58, (t / 80) % 120, 5, 1);
-    }),
-    make('Confirmado: celebra', t => {
-      joy(t);
-      line(55, 9, 61, 15, 3); line(61, 15, 73, 3, 3);
-      if (t % 600 < 300) { star(12, 12, 4); star(116, 16, 3); } else { star(22, 22, 2); star(108, 8, 5); }
-    }),
-    make('Sin conexión: carita triste', t => {
-      pair(0, 36, 26, 28 * blink(t));
-      for (let i = 0; i < 12; i++) { line(24, 24 - i, 56, 14 - i, 1, 0); line(72, 14 - i, 104, 24 - i, 1, 0); }
-      ell(117, 9, 8, 8); ell(117, 9, 6, 6, 0); line(111, 15, 123, 3, 2);
-    }),
-    make('Capturando: atenta, con ondas', t => {
-      pair(-8, 34, 24, 34 * blink(t));
-      box(116, 8, 8, 13, 4); line(110, 11, 114, 17, 1); line(114, 17, 118, 17, 1); line(118, 17, 122, 11, 1); line(116, 17, 116, 22, 1); line(112, 22, 120, 22, 1);
-      for (let i = 0; i < 4; i++) { const h = 4 + Math.abs(Math.sin(t / 110 + i * 1.7)) * 22; box(108 + i * 5, 42, 2, h, 1); }
-    })
-  ];
-
   const frame = t => {
-    for (const f of faces) {
-      buf = new Uint8Array(128 * 64);
-      f.draw(t);
-      const img = f.g.createImageData(128, 64);
-      for (let i = 0; i < buf.length; i++) img.data.set(buf[i] ? [255, 255, 255, 255] : [0, 0, 0, 255], i * 4);
-      f.g.putImageData(img, 0, 0);
-    }
-    if (!still) requestAnimationFrame(frame);
+    for (const { c, key } of shown) PetFace.draw(c, key, t);
+    if (!PetFace.still) requestAnimationFrame(frame);
   };
-  requestAnimationFrame(still ? () => frame(1000) : frame);
+  requestAnimationFrame(frame);
 })();
 </script>
