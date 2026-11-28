@@ -22,6 +22,7 @@ import pet.control.MonotonicClock
 import pet.protocol.ClientPlatform
 import pet.protocol.ErrorCode
 import pet.security.SecretStore
+import pet.security.assertSecretStoreContract
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -196,6 +197,8 @@ class PairingTest {
                 "non-canonical device_id" to offerJson(deviceId = D1.uppercase()),
                 "empty secret" to offerJson(secret = ""),
                 "unknown field" to offerJson { put("extra", 1) },
+                "repeated field" to offerJson().replaceFirst("{", "{\"version\":1,"),
+                "foreign client_kind" to offerJson(clientKind = "windows"),
             )
             for ((variant, payload) in malformed) {
                 val error = failure { a.client.decodeOffer(payload) }
@@ -247,7 +250,9 @@ class PairingTest {
             delay(15_000)
             device.touch(14_000, 15_000)
             assertRejected(post("/v1/pair", body), 409, ErrorCode.CONFIRMATION_EXPIRED)
-            assertTrue(device.snapshot().clientIds.isEmpty())
+            val snapshot = device.snapshot()
+            assertTrue(snapshot.clientIds.isEmpty())
+            assertEquals(OfferState.CONSUMED, snapshot.offerState)
         }
     }
 
@@ -350,8 +355,10 @@ class PairingTest {
             val b = pairSecond(a)
             val acquired = post("/v1/control/acquire", controlBody(a), a.credential)
             assertEquals(200, acquired.status)
-            val command = commandBody(a, leaseEpoch = 1)
+            val command = commandBody(a, leaseEpoch = 1, durationMs = 5000)
+            val appliedAt = now
             assertEquals(200, post("/v1/commands", command, a.credential).status)
+            val before = getState(b.credential).json
             delay(500)
             assertEquals(200, post("/v1/clients/revoke", revokeBody(a, a.device.clientId), a.credential).status)
 
@@ -362,12 +369,14 @@ class PairingTest {
             assertRejected(reacquire, 401, ErrorCode.UNAUTHENTICATED)
             assertNoState(reacquire)
 
-            delay(500)
             val state = getState(b.credential).json
             assertEquals(JsonNull, state["owner_client_id"], "the lease ends like a release")
             assertEquals(0L, state["lease_remaining_ms"]?.jsonPrimitive?.longOrNull)
-            assertEquals(1L, state["lease_epoch"]?.jsonPrimitive?.longOrNull, "the epoch is kept")
-            assertEquals("idle", state["expression"]?.jsonPrimitive?.content, "no second effect")
+            val unchanged = setOf("version", "boot_id", "expression", "lease_epoch")
+            assertEquals(before.filterKeys { it in unchanged }, state.filterKeys { it in unchanged }, "epoch kept")
+            // The original order ends at appliedAt + 5000; a replay 500 ms later would still show it at + 5200.
+            delay(appliedAt + 5_200 - now)
+            assertEquals("idle", getState(b.credential).json.text("expression"), "no second effect")
             assertNoSecretsLogged()
         }
     }
@@ -393,20 +402,25 @@ class PairingTest {
     @Test
     fun pairingSecretOnlyAuthenticatesPairRoute_T02_18() = runTest {
         Bench(this).run {
-            firstOffer()
+            val a = pairFirst()
+            requestOffer(a, "windows")
             val attempts = listOf(
-                getState(SECRET_1),
-                post("/v1/control/acquire", controlBody(CLIENT_X, sequence = 1), SECRET_1),
-                post("/v1/commands", commandBody(CLIENT_X, sequence = 2, leaseEpoch = 1), SECRET_1),
+                getState(SECRET_2),
+                post("/v1/control/acquire", controlBody(a.device.clientId, sequence = 10), SECRET_2),
+                post("/v1/commands", commandBody(a.device.clientId, sequence = 11, leaseEpoch = 1), SECRET_2),
             )
             for (attempt in attempts) {
                 assertEquals(401, attempt.status)
                 assertNoState(attempt)
             }
+            val seen = getState(a.credential).json
+            assertEquals(JsonNull, seen["owner_client_id"], "no lease was granted")
+            assertEquals(0L, seen["lease_epoch"]?.jsonPrimitive?.longOrNull)
+            assertEquals("idle", seen.text("expression"))
             val before = device.snapshot()
-            assertTrue(before.clientIds.isEmpty())
+            assertEquals(listOf(a.device.clientId), before.clientIds)
             assertEquals(OfferState.ACTIVE, before.offerState)
-            assertPending(post("/v1/pair", pairBody(SECRET_1)), "the offer still reserves")
+            assertPending(post("/v1/pair", pairBody(SECRET_2, name = "Windows B")), "the offer still reserves")
             assertEquals(OfferState.RESERVED, device.snapshot().offerState)
             assertNoSecretsLogged()
         }
@@ -434,22 +448,22 @@ class PairingTest {
             assertEquals(200, post("/v1/clients/revoke", revokeBody(a, a.device.clientId), a.credential).status)
 
             val texts = log.lines + listOf(
-                decodedWrong.toString(), decodedLate.toString(), a.device.toString(),
+                a.offer.toString(), decodedWrong.toString(), decodedLate.toString(), a.device.toString(),
                 identityError.toString(), expiredError.toString(),
             )
             for (text in texts) assertNoSecret(text)
-            assertTrue(log.lines.any { ErrorCode.OFFER_EXPIRED.name in it }, "the expiry is identifiable")
+            // Each event is identifiable through values the contract allows to log.
+            assertTrue(log.lines.count { a.device.clientId in it } >= 2, "pairing and revocation of A")
+            assertTrue(log.lines.any { PairingFailure.IDENTITY_MISMATCH.name in it }, "wrong fingerprint")
+            assertTrue(log.lines.any { ErrorCode.OFFER_EXPIRED.name in it }, "expired offer")
         }
     }
 
     @Test
     fun secretStoreRoundTripAndDelete_T02_22() = runTest {
+        // This half checks the in-memory double; step 4 runs the same contract on WindowsSecretStore.
         val store = RecordingSecretStore()
-        val value = SECRET_1.encodeToByteArray()
-        store.put("pairing/$D1", value)
-        assertContentEquals(value, store.get("pairing/$D1"))
-        store.delete("pairing/$D1")
-        assertNull(store.get("pairing/$D1"))
+        assertSecretStoreContract(store, "pairing/$D1", SECRET_1.encodeToByteArray())
         assertTrue(store.values.isEmpty(), "no value remains after delete")
 
         // A failed pairing (as in T02-07 and T02-10) never calls put.
@@ -474,7 +488,9 @@ class PairingTest {
             assertPending(post("/v1/clients/revoke", revoke, b.credential))
             delay(15_000)
             assertRejected(post("/v1/clients/revoke", revoke, b.credential), 409, ErrorCode.CONFIRMATION_EXPIRED)
-            assertTrue(a.device.clientId in device.snapshot().clientIds)
+            val snapshot = device.snapshot()
+            assertTrue(a.device.clientId in snapshot.clientIds)
+            assertFalse(snapshot.confirmationPending)
             assertEquals(200, getState(a.credential).status)
         }
         // A revokes itself: applied at once, without touch.
@@ -524,6 +540,7 @@ private const val BOOT = "33333333-3333-4333-8333-333333333333"
 private const val HOST = "192.168.1.50"
 private const val WIFI_SSID = "TEST-ONLY-NETWORK"
 private const val WIFI_PASSWORD = "TEST-ONLY-WIFI-PASSWORD"
+private const val USB_PREFIX = "@pp1 "
 private const val SECRET_PREFIX = "TEST-ONLY-SECRET"
 private const val CREDENTIAL_PREFIX = "TEST-ONLY-CREDENTIAL"
 private const val CIVIL_EPOCH_MS = 1_795_000_000_000L
@@ -539,6 +556,7 @@ private val FP1 = fingerprint("01")
 private val FP2 = fingerprint("02")
 private val FP99 = fingerprint("99")
 private val SECRET_1 = synthetic("$SECRET_PREFIX-0001")
+private val SECRET_2 = synthetic("$SECRET_PREFIX-0002")
 private val SECRET_FORGED = synthetic("$SECRET_PREFIX-9999")
 private val CREDENTIAL_X = synthetic("$CREDENTIAL_PREFIX-X")
 private val UUID = Regex("[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}")
@@ -555,6 +573,7 @@ private fun offerJson(
     deviceId: String = D1,
     fingerprint: String = FP1,
     secret: String = SECRET_1,
+    clientKind: String = "android",
     extra: JsonObjectBuilder.() -> Unit = {},
 ): String = buildJsonObject {
     put("version", 1)
@@ -562,7 +581,7 @@ private fun offerJson(
     put("fingerprint", fingerprint)
     put("host", HOST)
     put("port", 443)
-    put("client_kind", "android")
+    put("client_kind", clientKind)
     put("secret", secret)
     put("expires_in_ms", 60_000)
     extra()
@@ -646,7 +665,12 @@ private class SimulatedTlsTransport(
 
 private class ClientSide(val client: PairingClient, val store: RecordingSecretStore, val transport: SimulatedTlsTransport)
 
-private class Paired(val device: PairedDevice, val credential: String, val client: ClientSide) {
+private class Paired(
+    val device: PairedDevice,
+    val credential: String,
+    val client: ClientSide,
+    val offer: PairingOffer,
+) {
     var sequence = 0
 }
 
@@ -666,7 +690,9 @@ private fun assertPending(answer: Answer, message: String? = null) {
 
 private fun assertRejected(answer: Answer, status: Int, code: ErrorCode) {
     assertEquals(status, answer.status)
+    assertEquals("rejected", answer.text("status"))
     assertEquals(code.name, answer.text("code"))
+    assertTrue(answer.json["confirmation"] == null || answer.json["confirmation"] == JsonNull, "no confirmation")
     assertNull(answer.pairing())
 }
 
@@ -718,9 +744,9 @@ private class Bench(
             put("request_id", nextRequestId())
             fields()
         }
-        val line = device.usb("${PairingLimits.USB_FRAME_PREFIX}$frame\n")
-        assertTrue(line.startsWith(PairingLimits.USB_FRAME_PREFIX))
-        return Json.parseToJsonElement(line.removePrefix(PairingLimits.USB_FRAME_PREFIX).trim()).jsonObject
+        val line = device.usb("${USB_PREFIX}$frame\n")
+        assertTrue(line.startsWith(USB_PREFIX))
+        return Json.parseToJsonElement(line.removePrefix(USB_PREFIX).trim()).jsonObject
     }
 
     /** First offer over USB in provisioning mode (hello, wifi.set, offer.create), as JSON. */
@@ -764,22 +790,25 @@ private class Bench(
 
     fun controlBody(by: Paired): String = controlBody(by.device.clientId, ++by.sequence)
 
-    fun commandBody(clientId: String, sequence: Int, leaseEpoch: Int): String = header(clientId, sequence) {
-        put("lease_epoch", leaseEpoch)
-        put("action", "expression.set")
-        put("params", buildJsonObject {
-            put("expression", "happy")
-            put("duration_ms", 1000)
-        })
-    }
+    fun commandBody(clientId: String, sequence: Int, leaseEpoch: Int, durationMs: Int = 1000): String =
+        header(clientId, sequence) {
+            put("lease_epoch", leaseEpoch)
+            put("action", "expression.set")
+            put("params", buildJsonObject {
+                put("expression", "happy")
+                put("duration_ms", durationMs)
+            })
+        }
 
-    fun commandBody(by: Paired, leaseEpoch: Int): String = commandBody(by.device.clientId, ++by.sequence, leaseEpoch)
+    fun commandBody(by: Paired, leaseEpoch: Int, durationMs: Int = 1000): String =
+        commandBody(by.device.clientId, ++by.sequence, leaseEpoch, durationMs)
 
     fun revokeBody(by: Paired, target: String): String =
         header(by.device.clientId, ++by.sequence) { put("target_client_id", target) }
 
-    /** Presses and releases the sensor now (200 ms hold). */
+    /** Presses the sensor 1 ms from now, so the press starts after any reservation, and holds it 200 ms. */
     suspend fun tap() {
+        delay(1)
         val pressed = now
         delay(200)
         device.touch(pressed, now)
@@ -798,8 +827,8 @@ private class Bench(
 
     suspend fun pairFirst(): Paired {
         val a = client(name = "Android A")
-        val paired = pairWithTouch(a, a.client.decodeOffer(firstOffer()))
-        return Paired(paired, a.store.credential(), a)
+        val offer = a.client.decodeOffer(firstOffer())
+        return Paired(pairWithTouch(a, offer), a.store.credential(), a, offer)
     }
 
     /** `POST /v1/pair/offers` by an already paired client. Returns the offer JSON. */
@@ -816,8 +845,8 @@ private class Bench(
 
     suspend fun pairSecond(a: Paired): Paired {
         val b = client(ClientPlatform.WINDOWS, "Windows B")
-        val paired = pairWithTouch(b, b.client.decodeOffer(requestOffer(a, "windows")))
-        return Paired(paired, b.store.credential(), b)
+        val offer = b.client.decodeOffer(requestOffer(a, "windows"))
+        return Paired(pairWithTouch(b, offer), b.store.credential(), b, offer)
     }
 
     fun assertNoSecretsLogged() {

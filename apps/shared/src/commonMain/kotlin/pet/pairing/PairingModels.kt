@@ -3,20 +3,6 @@ package pet.pairing
 import pet.protocol.ClientPlatform
 import pet.protocol.ErrorCode
 
-/** Pairing timings fixed by contracts/EMPAREJAMIENTO.md (D12). */
-object PairingLimits {
-    const val OFFER_VALIDITY_MS = 60_000L
-    const val CONFIRMATION_WINDOW_MS = 15_000L
-    const val RESULT_RETENTION_MS = 30_000L
-    const val PENDING_RETRY_MS = 1_000L
-    const val PROVISIONING_MODE_MS = 300_000L
-    const val MAX_CLIENTS = 4
-    const val MAX_OFFER_BYTES = 512
-    const val MAX_PAIR_REQUEST_BYTES = 1024
-    const val MAX_USB_FRAME_BYTES = 1024
-    const val USB_FRAME_PREFIX = "@pp1 "
-}
-
 /**
  * Offer read from the QR code or the USB channel, already validated by [PairingClient.decodeOffer].
  *
