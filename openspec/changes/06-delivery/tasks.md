@@ -12,3 +12,5 @@
 - [ ] 2.3 Verificar: Contrastar 29 indicadores con rúbrica original, reunir evidencias y ensayar guion; los tres explican alguna parte ajena a su foco.
 - [ ] 2.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
 
+Para la entrega académica intermedia, [EVA_02 #30](https://github.com/wmrDev/agentic-iot-pet/issues/30) organiza el subconjunto de evidencias de R01 y R02. La [matriz de EVA2](../../../docs/entrega/EVA2.md) relaciona los 29 indicadores con el proyecto aprobado. El cierre de R01 y R02 sigue sujeto a sus escenarios completos.
+

@@ -3,6 +3,7 @@
 ## 1. Q01 Pruebas físicas P01–P19 y A01–A03
 - [ ] 1.1 Revisar contrato, dependencias y alcance del issue [#15](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/15).
 - [ ] 1.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
+  - Fichas del corte EVA_02 (#29) preparadas en `docs/pruebas/eva02/`; todas NO EJECUTADAS.
 - [ ] 1.3 Verificar: Completar matriz con dos Android y Windows, mediciones y fallos registrados; una prueba no ejecutada no cuenta como aprobada.
 - [ ] 1.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
 

@@ -6,9 +6,11 @@ Asistente físico de escritorio con expresiones, contacto, detección de ruido, 
 
 ## Estado real
 
-El diseño inicial fue aprobado el **17 de noviembre de 2026**. Esta base contiene documentación, plan, contratos iniciales y plantillas de colaboración. **Todavía no hay firmware, apps, simulador ni compilación automática implementados.** Los comandos de compilación del plan corresponden a archivos que se crearán en T00.
+El diseño inicial fue aprobado el **17 de noviembre de 2026**. T00 incorpora una pantalla compartida de bienvenida para Android y Windows, un arranque de consola para el simulador, el Gradle Wrapper y un firmware mínimo de diagnóstico USB (`firmware/`, PRUEBA_USB) que **compila para ESP32-S3 y todavía no se ha cargado en la placa**. [Entornos y comandos](docs/equipo/ENTORNOS.md) · [Traspaso](docs/equipo/TRASPASO.md).
 
-Repositorio compartido: https://github.com/WaltherMoraRivera/agentic-iot-pet. La preparación de OpenSpec y GitHub no implementa funciones de producto ni implica llamadas de IA pagadas.
+T01 verifica en Kotlin el contrato JSON y el permiso temporal de control con un reloj simulado. [Resultados de T01](docs/pruebas/resultados/2026-11-26-T01-contrato.md).
+
+Repositorio compartido: https://github.com/wmrDev/agentic-iot-pet. La preparación de OpenSpec y GitHub no implementa funciones de producto ni implica llamadas de IA pagadas.
 
 ## Empieza aquí
 
@@ -33,11 +35,11 @@ Repositorio compartido: https://github.com/WaltherMoraRivera/agentic-iot-pet. La
 
 ## Organización
 
-Un repositorio, una rama principal integrable y una rama por tarea. Cada integrante trabaja en su clon, con revisión por otra persona. Placa, aplicación y prueba forman parte de la misma entrega.
+Un repositorio, una rama principal integrable y una rama por tarea. Cada integrante trabaja en su clon; cada PR lleva una revisión de código registrada, que puede hacer un agente, y nombra su issue con `Closes #N` o `Parte de #N`. Placa, aplicación y prueba forman parte de la misma entrega.
 
 `AGENTS.md` contiene las reglas comunes; `CLAUDE.md` las importa. No necesitan instalar las habilidades particulares del autor del plan: las tareas incluyen sus pasos y verificaciones.
 
-El firmware y los proyectos Gradle se crearán al ejecutar T00 y las siguientes tareas. No se añaden carpetas vacías para aparentar implementación.
+El diagnóstico ESP32-S3 (PRUEBA_USB) está en `firmware/`. El estado de verificación de T00 distingue cada plataforma y el banco físico. No se añaden carpetas vacías para aparentar implementación.
 
 ## Condiciones de funcionamiento
 
@@ -54,4 +56,4 @@ Las limitaciones se registran; un resultado simulado nunca se presenta como prue
 
 [OpenSpec, responsabilidades, etiquetas y uso de GitHub](docs/equipo/OPENSPEC_GITHUB.md). Los issues y milestones se derivan de los cambios OpenSpec; el alcance opcional queda separado.
 
-[Backlog publicado con responsables](docs/equipo/BACKLOG.md) · [Issues](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues) · [Milestones](https://github.com/WaltherMoraRivera/agentic-iot-pet/milestones).
+[Backlog publicado con responsables](docs/equipo/BACKLOG.md) · [Issues](https://github.com/wmrDev/agentic-iot-pet/issues) · [Milestones](https://github.com/wmrDev/agentic-iot-pet/milestones).

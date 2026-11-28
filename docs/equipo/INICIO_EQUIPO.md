@@ -92,7 +92,7 @@ No se necesitan las habilidades `superpowers` de este entorno en los otros equip
 - Cumple el comportamiento y criterios de la tarea y sus consumidores.
 - Pasa sus comprobaciones automáticas; la evidencia manual pendiente está diferenciada.
 - Conserva seguridad, datos y compatibilidad acordadas.
-- Otra persona revisó el cambio y el responsable humano lo puede explicar.
+- El cambio tiene una revisión de código registrada en el PR (un agente puede hacerla) y el responsable humano lo puede explicar.
 - La documentación refleja el estado real y el commit queda identificado.
 
 Un agente que termina de escribir no convierte por sí solo una tarea en terminada.

@@ -36,3 +36,13 @@ Añadir fecha, ID, problema, decisión, alternativas relevantes, tareas afectada
 ## Organización y plan aprobados posteriormente
 
 Walther aprobó inicialmente el plan ejecutable y autorizó conectar y publicar en `WaltherMoraRivera/agentic-iot-pet`. Walther lidera con flexibilidad; Maximiliano colabora con foco en pruebas físicas; Winderson se enfoca en gráficos e interfaz. Los responsables nominales vigentes están en BACKLOG.md y los issues. OpenSpec organiza requisitos y escenarios; MoSCoW organiza prioridades. Las etiquetas Modelo/Esfuerzo describen capacidad y razonamiento, no horas.
+
+## Decisiones del 27 de noviembre de 2026
+
+| ID | Problema | Decisión | Alternativas descartadas | Afecta | Aprobación |
+|---|---|---|---|---|---|
+| D10 | La regla de cierre pedía revisión de otro integrante, mientras el diseño aprobado ya permitía que revisara un agente. Eso bloqueaba cerrar issues terminados, como #1 y #4. | La revisión de código puede hacerla un agente, registrada en el PR con sus hallazgos corregidos o derivados a un issue. Con evidencia y tasks.md al día, el líder cierra el issue. Las pruebas físicas siguen siendo necesarias donde el issue las pide. | Mantener la revisión humana obligatoria; confirmación humana breve en la junta. | Todos los issues; plantillas de PR e issue; `OPENSPEC_GITHUB.md`, `INICIO_EQUIPO.md`, README. Los «Criterios de cierre» de los issues creados antes de esta fecha se leen según D10. | Walther, 27-11-2026 |
+| D11 | Los PR no nombraban su issue y no cerraban nada al unirse. | Primera línea del PR: `Closes #N` si completa el issue, o `Parte de #N` si es un avance parcial. | `Closes` en todo PR, que cerraría issues con pruebas físicas pendientes. | Plantilla de PR, `OPENSPEC_GITHUB.md`. | Walther, 27-11-2026 |
+| D12 | T02 no podía implementarse sin fijar el emparejamiento (10 preguntas abiertas en `T02-casos.md`). | Se aprueba [`contracts/EMPAREJAMIENTO.md`](../../contracts/EMPAREJAMIENTO.md) v1: huella SHA-256 de la clave TLS fijada en la app; token portador por cliente; oferta de 60 s y toque de 15 s; máximo 4 clientes. El USB empareja solo al primer cliente o tras un restablecimiento (respeta D05). Autorrevocación sin toque; revocar a otro cliente exige el toque. | TLS mutuo; revocación de otros sin toque; USB que agrega clientes con clientes ya emparejados. | T02 (#5), T03 (#6), Q02 (#16); `T02-casos.md`. Pendiente de medición: ECDSA P-256, memoria para 4 clientes y gesto de restablecimiento (H01). | Walther, 27-11-2026 |
+
+La explicación de la terna sigue siendo necesaria para la rúbrica (indicador 13 y R02, tarea 2.3); se prepara en el ensayo, no como condición para cerrar cada issue.

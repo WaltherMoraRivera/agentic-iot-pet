@@ -1,6 +1,6 @@
 # Backlog publicado
 
-Responsables nominales; asignaciones GitHub para Maximiliano/Winderson pendientes de sus cuentas.
+La tabla indica responsables nominales. Winderson tiene asignadas las tareas visuales vinculadas a EVA_02. La cuenta de Maximiliano queda por confirmar.
 
 | Issue | Hito | Responsable | Etiquetas |
 |---|---|---|---|
@@ -30,3 +30,13 @@ Responsables nominales; asignaciones GitHub para Maximiliano/Winderson pendiente
 | [#24 [C04] Acciones de escritorio en lista autorizada](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/24) | Backlog · Mejoras opcionales | Walther | MoSCoW: Could, Modelo: high, Esfuerzo: xhigh, Foco: integracion |
 | [#25 [C05] MCP para expresiones explícitas de agentes](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/25) | Backlog · Mejoras opcionales | Walther | MoSCoW: Could, Modelo: medium, Esfuerzo: high, Foco: integracion |
 | [#26 [W01] Registrar extensiones fuera de la entrega](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/26) | Fuera de alcance · Esta entrega | Walther | MoSCoW: Won't, Modelo: low, Esfuerzo: medium, Foco: integracion |
+
+## Evaluación 2
+
+El [hito EVA_02](https://github.com/wmrDev/agentic-iot-pet/milestone/9) organiza las tareas específicas. La [etiqueta EVA_02](https://github.com/wmrDev/agentic-iot-pet/issues?q=label%3AEVA_02) reúne también los issues compartidos con los hitos de producto. El orden completo está en el issue #30.
+
+| Issue | Responsable | Etiquetas de trabajo |
+|---|---|---|
+| [#28 Reconexión Android y sincronización local](https://github.com/wmrDev/agentic-iot-pet/issues/28) | Walther | MoSCoW: Must, Modelo: high, Esfuerzo: high, Foco: integracion |
+| [#29 Recorrido físico, seguridad y consumo en dos Android](https://github.com/wmrDev/agentic-iot-pet/issues/29) | Maximiliano | MoSCoW: Must, Modelo: medium, Esfuerzo: high, Foco: fisico |
+| [#30 Coordinación, informe, repositorio y demo](https://github.com/wmrDev/agentic-iot-pet/issues/30) | Walther con la terna | MoSCoW: Must, Modelo: medium, Esfuerzo: high, Foco: integracion |
