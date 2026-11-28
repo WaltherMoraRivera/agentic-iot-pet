@@ -121,7 +121,14 @@ const click = async (name, role = 'button') => {
     assert.ok(box.hit, `«${name}» está tapado y no se puede pulsar`);
     for (const type of ['mousePressed', 'mouseReleased'])
       await send('Input.dispatchMouseEvent', { type, x: box.x, y: box.y, button: 'left', clickCount: 1 });
-    if (await on(target, 'function () { return this.received; }')) return;
+    if (await on(target, 'function () { return this.received; }')) {
+      if (role === 'link') {
+        const panel = await on(target, 'function () { return this.hash.slice(1); }');
+        // El clic llega antes de que hashchange muestre el panel nuevo.
+        await waitFor(`document.getElementById(${JSON.stringify(panel)})?.hidden === false`, `mostrar ${name}`);
+      }
+      return;
+    }
     await sleep(100);
   }
   assert.fail(`el clic en «${name}» no llega al control`);
