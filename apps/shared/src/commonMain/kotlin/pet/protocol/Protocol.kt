@@ -62,8 +62,18 @@ enum class ErrorCode(val httpStatus: Int) {
     BUSY(409),
     ID_CONFLICT(409),
     LEASE_EXPIRED(409),
+
+    // contracts/EMPAREJAMIENTO.md (D12); CONFIRMATION_BUSY is shared with T04.
+    OFFER_EXPIRED(409),
+    OFFER_CONSUMED(409),
+    DEVICE_MISMATCH(409),
+    CONFIRMATION_EXPIRED(409),
+    CONFIRMATION_BUSY(409),
+    CLIENT_LIMIT_REACHED(409),
+    UNKNOWN_CLIENT(409),
     MESSAGE_TOO_LARGE(413),
     UNSUPPORTED_MEDIA_TYPE(415),
+    STORAGE_FAILED(500),
 }
 
 data class Reply(val requestId: String?, val state: DeviceState?, val code: ErrorCode?) {
