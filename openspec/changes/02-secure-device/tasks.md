@@ -11,7 +11,7 @@
 - [ ] 2.1 Revisar contrato, dependencias y alcance del issue [#5](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/5).
 - [ ] 2.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
   - [Contrato de emparejamiento](../../../contracts/EMPAREJAMIENTO.md) aprobado el 27-11-2026 (D12): flujo USB y oferta, `POST /v1/pair`, revocación y errores; responde las 10 preguntas de los casos. Paso 1 de T02 hecho; sin implementación.
-  - Paso 2 (28-11-2026): [`PairingTest`](../../../apps/shared/src/desktopTest/kotlin/pet/pairing/PairingTest.kt) con los 19 casos compartidos y esqueleto de API sin lógica; los 19 fallan con `NotImplementedError` y los 21 de T01 pasan ([resultado en rojo](../../../docs/pruebas/resultados/2026-11-28-T02-tests-rojo.md)). Falta la implementación (paso 3).
+  - Paso 2 (28-11-2026): [`PairingTest`](../../../apps/shared/src/commonTest/kotlin/pet/pairing/PairingTest.kt) con los 19 casos compartidos y esqueleto de API sin lógica; los 19 fallan con `NotImplementedError` y los 21 de T01 pasan; revisión D10 aplicada en `f880c86` ([resultado en rojo](../../../docs/pruebas/resultados/2026-11-28-T02-tests-rojo.md)). Falta la implementación (paso 3).
 - [ ] 2.3 Verificar: Primera app autorizada con identidad verificada; QR vencido/reutilizado y cliente revocado rechazados; no se desactiva TLS.
 - [ ] 2.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
   - [Casos preparados sin placa](../../../docs/pruebas/T02-casos.md): 27 casos planificados (19 compartidos, 1 manual en Android, 3 de simulador y 4 de placa) y preguntas abiertas del contrato. Sin implementación ni resultados.

@@ -10,7 +10,7 @@ En el contrato la huella viaja como 64 hexadecimales en minúsculas. Los datos s
 
 | Entorno | Qué es | Necesita placa |
 |---|---|---|
-| **Compartido** | `ST/pairing/PairingTest.kt` en `:shared:desktopTest`, con un dispositivo simulado en Kotlin, reloj monotónico inyectado, sensor de toque simulado y transporte TLS simulado que informa la huella del par | No |
+| **Compartido** | `apps/shared/src/commonTest/kotlin/pet/pairing/PairingTest.kt` (`ST/pairing/PairingTest.kt`), ejecutado con `:shared:desktopTest`, con un dispositivo simulado en Kotlin, reloj monotónico inyectado, sensor de toque simulado y transporte TLS simulado que informa la huella del par | No |
 | **Simulador** | Servidor HTTPS de `simulator/` con certificados exclusivos de prueba, fuera de Git. Hoy el simulador es un esqueleto sin protocolo: estos casos quedan bloqueados hasta que sirva `POST /v1/pair` | No |
 | **Placa** | ESP32-S3 con firmware, USB, TTP223 y registro serie | Sí |
 
