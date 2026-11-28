@@ -7,8 +7,7 @@
 - [ ] 1.3 Verificar: Sesión continúa sin red; audio no genera bucle acústico; gestos y confirmaciones producen un solo efecto; montaje y consumo documentados.
 - [ ] 1.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
   - 2026-11-27: PR #36 unido con revisión de código de agente (D10). Producto y tests compilan en Windows (`b503c73` y `8f0c83a`); los 61 tests y `T04_PLACA.md` quedan pendientes de ejecutar en la placa.
-
-  - 2026-11-28: D14 fija tres cambios para T04: un toque breve en pausa termina la sesión, la persistencia sale del ciclo de 10 ms y se ignora un toque soltado después de que vence la confirmación. Están pendientes de implementar con tests Unity y de medir en la placa.
+  - 2026-11-28: D14 fija tres cambios para T04: un toque breve en pausa termina la sesión con sus efectos de cierre, la marca de sesión se guarda fuera del ciclo de 10 ms y se ignora un toque soltado después de que vence la confirmación. Falta implementarlos con tests Unity y medirlos en la placa.
 
 ## 2. T05 Historial, acceso local y sincronización incremental
 - [ ] 2.1 Revisar contrato, dependencias y alcance del issue [#9](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/9).
