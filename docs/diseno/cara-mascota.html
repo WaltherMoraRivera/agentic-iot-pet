@@ -62,7 +62,7 @@
       pair(look, 32, 28, 36 * blink(t));
     }),
     make('happy', 'Contenta: rebota y se sonroja', t => joy(t)),
-    make('love', 'Enamorada: caricia larga', t => {
+    make('love', 'Enamorada: expresión temporal', t => {
       const s = 1 + Math.sin(t / 160) * 0.12;
       for (const x of [40, 88]) {
         paint(x - 18, 14, x + 18, 50, 1, (px, py) => {
@@ -94,6 +94,20 @@
       line(24, 13, 56, 16, 3); line(72, 16, 104, 13, 3);
       box(64, 58, 120, 1, 0); box(4 + ((t / 80) % 120) / 2, 58, (t / 80) % 120, 5, 1);
     }),
+    make('paused', 'En pausa: barras de pausa', t => {
+      pair(0, 33, 27, 20 * blink(t));
+      box(60, 55, 3, 10, 0); box(68, 55, 3, 10, 0);
+    }),
+    make('interrupted', 'Sesión interrumpida: signo de aviso', t => {
+      pair(0, 36, 27, 21 * blink(t));
+      line(64, 4, 55, 20, 1); line(55, 20, 73, 20, 1); line(73, 20, 64, 4, 1);
+      line(64, 9, 64, 14, 1); box(64, 17, 2, 2, 0);
+    }),
+    make('waiting', 'Esperando confirmación: reloj', t => {
+      pair(0, 34, 27, 25 * blink(t));
+      ell(64, 54, 8, 8); ell(64, 54, 6, 6, 0);
+      line(64, 49, 64, 54, 1); line(64, 54, 68, 56, 1);
+    }),
     make('confirmed', 'Confirmado: celebra', t => {
       joy(t);
       line(55, 9, 61, 15, 3); line(61, 15, 73, 3, 3);
@@ -104,7 +118,7 @@
       for (let i = 0; i < 12; i++) { line(24, 24 - i, 56, 14 - i, 1, 0); line(72, 14 - i, 104, 24 - i, 1, 0); }
       ell(117, 9, 8, 8); ell(117, 9, 6, 6, 0); line(111, 15, 123, 3, 2);
     }),
-    make('capture', 'Capturando: atenta, con ondas', t => {
+    make('capture', 'Capturando: voz bajo demanda', t => {
       pair(-8, 34, 24, 34 * blink(t));
       box(116, 8, 8, 13, 4); line(110, 11, 114, 17, 1); line(114, 17, 118, 17, 1); line(118, 17, 122, 11, 1); line(116, 17, 116, 22, 1); line(112, 22, 120, 22, 1);
       for (let i = 0; i < 4; i++) { const h = 4 + Math.abs(Math.sin(t / 110 + i * 1.7)) * 22; box(108 + i * 5, 42, 2, h, 1); }

@@ -521,6 +521,39 @@ test('al vencer los 15 s de captura el foco no se pierde', async () => {
   assert.equal(await evaluate('document.activeElement.id'), 'notices');
 });
 
+test('gestos físicos de estudio y reinicio simulado', async () => {
+  await open();
+  await connect();
+  await click('Toque breve');
+  await faceIs('Concentrada');
+  await click('Doble toque');
+  await faceIs('En pausa');
+  await click('Doble toque');
+  await faceIs('Concentrada');
+  await click('Toque largo');
+  await faceIs('Capturando');
+  await click('Reiniciar placa simulada');
+  await faceIs('Sesión interrumpida');
+  await click('Estudio', 'link');
+  await says('study-text', 'Sesión interrumpida');
+});
+
+test('la confirmación física cuenta 15 s y vence sin aplicar el umbral', async () => {
+  await open();
+  await connect();
+  await login();
+  await fill('Umbral (0,01 a 1)', '0.8', 'spinbutton');
+  await click('Pedir cambio de umbral');
+  await faceIs('Esperando confirmación');
+  await says('confirmation-clock', '15 s');
+  await says('confirmation-clock', '14 s');
+  await waitFor("document.getElementById('order-status').innerText.includes('no confirmada')", 'vencer la orden', 17000);
+  await says('threshold-now', '0,60');
+  await click('Confirmar orden (placa)');
+  await says('order-status', 'respuesta tardía');
+  await says('threshold-now', '0,60');
+});
+
 test('el boceto de la cara funciona descargado solo', async () => {
   const alone = await mkdtemp(join(tmpdir(), 'pet-boceto-'));
   try {
@@ -529,8 +562,8 @@ test('el boceto de la cara funciona descargado solo', async () => {
     const earlier = errors.length;
     await send('Page.navigate', { url: pathToFileURL(copy).href });
     await waitFor(`document.readyState === 'complete' && [...document.querySelectorAll('canvas')]
-      .filter(c => c.getContext('2d').getImageData(0, 0, 128, 64).data.some((v, i) => i % 4 === 0 && v)).length === 9`,
-    'nueve caras dibujadas sin archivos vecinos', 3000);
+      .filter(c => c.getContext('2d').getImageData(0, 0, 128, 64).data.some((v, i) => i % 4 === 0 && v)).length === 12`,
+    'doce caras dibujadas sin archivos vecinos', 3000);
     assert.deepEqual(errors.slice(earlier), []);
   } finally {
     await rm(alone, { recursive: true, force: true });

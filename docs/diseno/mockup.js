@@ -6,7 +6,7 @@
   const SCREENS = ['conexion', 'estudio', 'chat', 'estado', 'eva02'];
   const ORDER_TIMEOUT_MS = 15000; // vencimiento de una confirmación según el plan (T04)
   const CAPTURE_LIMIT_MS = 15000; // máximo de captura según el diseño aprobado
-  const FACE_NAMES = { normal: 'Normal', focus: 'Concentrada', confirmed: 'Confirmado', offline: OFFLINE, capture: 'Capturando', surprised: 'Sorprendida' };
+  const FACE_NAMES = { normal: 'Normal', focus: 'Concentrada', paused: 'En pausa', interrupted: 'Sesión interrumpida', waiting: 'Esperando confirmación', confirmed: 'Confirmado', offline: OFFLINE, capture: 'Capturando', surprised: 'Sorprendida' };
 
   const state = {
     link: 'none', // none | connecting | on | lost | failed
@@ -88,7 +88,8 @@
     if (state.capture) return 'capture';
     if (state.link !== 'on') return 'offline';
     if (state.flash && now() < state.flash.until) return state.flash.face;
-    return state.study.phase === 'running' ? 'focus' : 'normal';
+    if (state.pending?.physical) return 'waiting';
+    return { running: 'focus', paused: 'paused', interrupted: 'interrupted' }[state.study.phase] ?? 'normal';
   };
 
   // --- Órdenes ---
@@ -102,11 +103,11 @@
 
   // `private`: la orden nombra datos que solo se ven con sesión.
   // @spec:01-foundation-v01-lenguaje-visual-expresiones-y-flujos-de-la-interfaz
-  const sendOrder = ({ label, apply, private: isPrivate = false }) => {
+  const sendOrder = ({ label, apply, physical = false, private: isPrivate = false }) => {
     if (state.link !== 'on' || state.pending) return;
     const id = ++state.sequence;
     const timer = setTimeout(() => { abandonOrder('La placa no respondió a tiempo.'); render(); }, ORDER_TIMEOUT_MS);
-    state.pending = { id, label, apply, timer, private: isPrivate };
+    state.pending = { id, label, apply, timer, physical, expiresAt: now() + ORDER_TIMEOUT_MS, private: isPrivate };
     state.board = { id, label, private: isPrivate };
     state.order = { icon: 'wait', text: `Esperando confirmación de la placa: «${label}».`, private: isPrivate };
   };
@@ -117,6 +118,10 @@
     const report = (icon, text) => { state.order = { icon, text, private: isPrivate }; };
     if (state.pending?.id !== id) {
       report('off', `Llegó una respuesta tardía y se descartó: «${label}» sigue no confirmada.`);
+      return;
+    }
+    if (now() >= state.pending.expiresAt) {
+      abandonOrder('La confirmación venció.');
       return;
     }
     const { apply, timer } = state.pending;
@@ -160,11 +165,11 @@
   const running = ms => { state.study = { phase: 'running', ms, since: now() }; };
   const stopped = phase => { state.study = { phase, ms: studyElapsed(), since: 0 }; };
   const ORDERS = {
-    start: { from: ['idle', 'finished'], apply: () => running(0) },
+    start: { from: ['idle', 'finished', 'interrupted'], apply: () => running(0) },
     pause: { from: ['running'], apply: () => stopped('paused') },
     resume: { from: ['paused'], apply: () => running(state.study.ms) },
     finish: { from: ['running', 'paused'], apply: () => stopped('finished') },
-    happy: { from: ['idle', 'running', 'paused', 'finished'], apply: () => {} }, // solo cambia la cara
+    happy: { from: ['idle', 'running', 'paused', 'finished', 'interrupted'], apply: () => {} }, // solo cambia la cara
   };
   const canOrder = key => state.link === 'on' && !state.pending && ORDERS[key].from.includes(state.study.phase);
 
@@ -207,6 +212,28 @@
       state.talkNote = '';
       state.capture = setTimeout(() => { stopCapture('Captura detenida al llegar a 15 s.'); render(); }, CAPTURE_LIMIT_MS);
     }
+  };
+
+  // Las confirmaciones físicas tienen prioridad frente a los gestos de estudio o voz.
+  const boardGesture = gesture => {
+    if (state.link !== 'on') return;
+    if (state.pending?.physical) {
+      if (gesture === 'short') boardReply(true);
+      return;
+    }
+    if (gesture === 'short' && ORDERS.start.from.includes(state.study.phase)) running(0);
+    if (gesture === 'double' && state.study.phase === 'running') stopped('paused');
+    else if (gesture === 'double' && state.study.phase === 'paused') running(state.study.ms);
+    if (gesture === 'long' && !state.capture) toggleTalk();
+  };
+
+  const restartBoard = () => {
+    if (state.link !== 'on') return;
+    if (ORDERS.finish.from.includes(state.study.phase)) stopped('interrupted');
+    abandonOrder('Se reinició la placa simulada.');
+    state.board = null;
+    state.flash = null;
+    if (state.capture) stopCapture('Captura cancelada: se reinició la placa.');
   };
 
   // --- Chat ---
@@ -313,7 +340,7 @@
     }
     if (isBlocked('threshold-error')) return;
     showError('threshold-error', '');
-    sendOrder({ label: `Cambiar umbral a ${format(value)}`, apply: () => { state.threshold = value; }, private: true });
+    sendOrder({ label: `Cambiar umbral a ${format(value)}`, apply: () => { state.threshold = value; }, physical: true, private: true });
   };
 
   // --- Pintado ---
@@ -324,7 +351,7 @@
     lost: ['off', `${OFFLINE}: se cortó el enlace.`, 'La placa sigue funcionando sola. Restablece el enlace o vuelve a conectar.'],
     failed: ['off', `${OFFLINE}: No se encontró la placa.`, 'Revisa que esté encendida y en la misma red, y reintenta.'],
   };
-  const STUDY = { idle: 'No hay sesión en curso.', running: 'Sesión en curso', paused: 'Sesión en pausa', finished: 'Sesión terminada' };
+  const STUDY = { idle: 'No hay sesión en curso.', running: 'Sesión en curso', paused: 'Sesión en pausa', finished: 'Sesión terminada', interrupted: 'Sesión interrumpida' };
 
   const staleText = () => {
     if (state.link === 'on') return '';
@@ -358,6 +385,10 @@
     setStatus('link-status', icon, text);
     setText($('link-help'), help);
     setStatus('order-status', state.order?.icon ?? 'wait', state.order?.text ?? '');
+    const clock = $('confirmation-clock');
+    clock.hidden = !state.pending?.physical;
+    const seconds = clock.hidden ? 0 : Math.max(0, Math.ceil((state.pending.expiresAt - now()) / 1000));
+    setText(clock, clock.hidden ? '' : `Tiempo restante para tocar la placa: ${seconds} s.`);
     showNotice('mic-status', Boolean(state.capture));
     showNotice('alert-status', Boolean(state.alert));
     setText($('alert-status').querySelector('span'), state.alert);
@@ -381,6 +412,9 @@
   const renderTexts = () => {
     const stale = staleText();
     setText($('study-text'), studyText());
+    const phase = state.study.phase;
+    $('study-icon').hidden = phase !== 'paused' && phase !== 'interrupted';
+    $('study-icon').querySelector('use').setAttribute('href', phase === 'paused' ? '#i-pause' : '#i-warn');
     setText($('study-link'), stale);
     setText($('talk-help'), state.link === 'on' || state.capture
       ? `${state.talkNote} No se usa tu micrófono; la captura simulada dura 15 s como máximo.`.trim()
@@ -430,6 +464,10 @@
   handle('restore', 'click', () => { if (state.link === 'lost') linkUp(); });
   handle('reply-ok', 'click', () => boardReply(true));
   handle('reply-no', 'click', () => boardReply(false));
+  handle('board-short', 'click', () => boardGesture('short'));
+  handle('board-double', 'click', () => boardGesture('double'));
+  handle('board-long', 'click', () => boardGesture('long'));
+  handle('board-restart', 'click', restartBoard);
   handle('talk', 'click', toggleTalk);
   handle('chat-form', 'submit', sendMessage);
   handle('login-form', 'submit', login);

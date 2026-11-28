@@ -1,8 +1,8 @@
 # Cara de la mascota (V01, issue #3, parte 1)
 
-**Estado:** primer boceto aprobado por Winderson el 25-11-2026, ajustable más adelante. Falta la revisión de Walther.
+**Estado:** estilo B elegido por Winderson y aprobado como base por Walther. Ajustes de la revisión incorporados al boceto y al mockup; falta validar en OLED físico.
 
-**Boceto animado:** [`docs/diseno/cara-mascota.html`](../../diseno/cara-mascota.html) (descargar y abrir en el navegador). Imagen fija: [`cara-mascota.png`](../../diseno/cara-mascota.png).
+**Boceto animado:** [`docs/diseno/cara-mascota.html`](../../diseno/cara-mascota.html) (descargar y abrir en el navegador). Imagen fija del boceto inicial: [`cara-mascota.png`](../../diseno/cara-mascota.png).
 
 ## Intención
 
@@ -11,7 +11,7 @@ Mascota tierna y simpática, con ojos expresivos y simples, que se vea profesion
 ## Alcance
 
 - Incluye: la cara en el OLED de 128×64, blanco y negro, y sus estados.
-- No incluye todavía: pantallas de la app (conexión, estudio, chat, estado), que son el resto de V01; animaciones de transición (S01); firmware.
+- [Mockup navegable de V01](../../diseno/mockup.html), con simulación de gestos, conexión y órdenes. Las transiciones avanzadas corresponden a S01; el dibujo en la placa requiere validación física.
 
 ## Alternativas
 
@@ -28,22 +28,28 @@ Se eligió B para que se vea profesional.
 | Estado | Cuándo | Cómo se distingue |
 |---|---|---|
 | Normal | Reposo | Bloques altos y lisos; mira a los lados y parpadea |
-| Contenta | Toque | Ojos en arco, mejillas y rebote |
-| Enamorada | Caricia larga | Ojos de corazón |
+| Contenta | Expresión temporal o final de sesión | Ojos en arco, mejillas y rebote |
+| Enamorada | Expresión temporal, sin gesto propio | Ojos de corazón |
 | Sorprendida | Ruido fuerte | Ojos grandes y signo de exclamación |
 | Con sueño | Inactividad prolongada | Ojos entrecerrados, cabeceo y «z» |
-| Concentrada | Sesión de estudio | Ceño y barra de avance |
+| Concentrada | Estudio en curso, iniciado por toque breve en reposo o desde la app | Ceño suave y barra de avance |
+| En pausa | Doble toque durante estudio o pausa desde la app; otro doble toque reanuda | Dos barras verticales |
+| Sesión interrumpida | Reinicio con una sesión activa o en pausa | Triángulo de aviso |
+| Esperando confirmación | Cambio protegido pendiente de toque físico (15 s) | Reloj en la cara y cuenta atrás visible en la app |
 | Confirmado | La placa aceptó una orden | Contenta, marca de verificación y destellos |
 | Sin conexión | No hay app enlazada | Cara triste y círculo tachado |
-| Capturando | Micrófono en uso | Micrófono y ondas |
+| Capturando | Captura de voz bajo demanda solicitada con toque largo o desde la app | Micrófono y ondas |
 
-El indicador de captura tiene prioridad sobre los demás iconos y adornos. Las expresiones temporales caducan y vuelven al estado de fondo.
+La medición local de ruido no activa la cara de captura. El toque breve confirma una orden protegida en espera en vez de iniciar estudio. El indicador de captura tiene prioridad sobre los demás iconos y adornos. Las expresiones temporales caducan y vuelven al estado de fondo.
 
 ## Escenarios
 
 - **WHEN** la placa pierde la app **THEN** se ve el círculo tachado y la cara sigue funcionando.
 - **WHEN** hay captura y otro aviso a la vez **THEN** se muestra el micrófono.
 - **WHEN** termina una expresión temporal **THEN** vuelve al estado anterior vigente.
+
+- **WHEN** pasan 15 s sin confirmar **THEN** desaparece la cuenta atrás y la orden queda sin aplicar.
+- **WHEN** se reinicia la placa durante una sesión pausada o en curso **THEN** aparece «Sesión interrumpida».
 
 ## A cargo de quien lo implemente
 
