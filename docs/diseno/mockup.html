@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mascota: prototipo de la app (datos simulados)</title>
+<style>
+  :root { color-scheme: light dark; font-family: system-ui, sans-serif; line-height: 1.5; } /* ponytail: prototype styles */
+  body { max-width: 40rem; margin-inline: auto; padding: 1rem; overflow-wrap: anywhere; } /* ponytail: prototype styles */
+  figure { margin: 0; } /* ponytail: prototype styles */
+  iframe { display: block; width: min(16rem, 100% - 0.75rem); height: auto; aspect-ratio: 2; background: #000; border: 6px solid #222; border-radius: 6px; } /* ponytail: prototype styles (marco del OLED, igual que cara-mascota.html) */
+  nav, .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-block: 0.5rem; } /* ponytail: prototype styles */
+  nav a { display: inline-flex; align-items: center; min-height: 2.75rem; padding-inline: 0.75rem; border: 1px solid; } /* ponytail: prototype styles */
+  nav a[aria-current="page"], button[aria-pressed="true"] { font-weight: bold; border-width: 3px; } /* ponytail: prototype styles */
+  button, input { font: inherit; min-height: 2.75rem; max-width: 100%; } /* ponytail: prototype styles */
+  input[type="checkbox"] { width: 1.5rem; height: 1.5rem; min-height: 0; } /* ponytail: prototype styles */
+  label { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; min-height: 2.75rem; } /* ponytail: prototype styles */
+  [aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; } /* ponytail: prototype styles */
+  :focus-visible { outline: 3px solid; outline-offset: 2px; } /* ponytail: prototype styles */
+  svg.icon { width: 1.25em; height: 1.25em; vertical-align: middle; fill: none; stroke: currentColor; stroke-width: 2; } /* ponytail: prototype styles */
+  .banner { border: 2px solid; padding: 0.25rem 0.5rem; margin-block: 0.5rem; } /* ponytail: prototype styles */
+  #notices { position: sticky; top: 0; z-index: 1; box-sizing: border-box; max-height: 60vh; overflow-y: auto; background: Canvas;border-block-end: 1px solid; overflow-anchor: none; } /* ponytail: prototype styles (60vh: con zoom alto deben dejar sitio al contenido) */
+  #notices p { margin-block: 0.25rem; } /* ponytail: prototype styles */
+  .status:not([hidden]) { display: flex; align-items: center; gap: 0.5rem; } /* ponytail: prototype styles */
+  .status svg, .status button { flex-shrink: 0; } /* ponytail: prototype styles */
+  .status span { flex: 1; min-width: 0; } /* ponytail: prototype styles */
+  .table { overflow-x: auto; } /* ponytail: prototype styles */
+  th, td { padding-inline: 0.5rem; text-align: start; } /* ponytail: prototype styles */
+  aside { margin-block-start: 2rem; padding: 0.5rem; border: 2px dashed; } /* ponytail: prototype styles */
+</style>
+</head>
+<body>
+<svg width="0" height="0" aria-hidden="true">
+  <symbol id="i-ok" viewBox="0 0 24 24"><path d="M4 13l5 5L20 6"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
+  <symbol id="i-wait" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></symbol>
+  <symbol id="i-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.5 18.5l13-13"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 17v2"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3M8 21h8"/></symbol>
+</svg>
+
+<header>
+  <h1>Mascota: prototipo de la app</h1>
+  <p class="banner"><strong>DATOS SIMULADOS.</strong> No hay placa, red, micrófono, IA ni cuenta real. Nada se envía ni se guarda: al recargar se borra todo.</p>
+</header>
+<noscript><p>Este prototipo necesita JavaScript.</p></noscript>
+
+<figure>
+  <!-- La cara la dibuja el propio boceto: un solo render para los dos. -->
+  <iframe id="face" title="OLED simulado de la mascota" src="cara-mascota.html#offline" data-face="offline" sandbox="allow-scripts" tabindex="-1"></iframe>
+  <figcaption id="face-name">El prototipo necesita <code>mockup.js</code> y <code>cara-mascota.html</code> en la misma carpeta.</figcaption>
+</figure>
+
+<nav aria-label="Pantallas">
+  <a href="#conexion">Conexión</a>
+  <a href="#estudio">Estudio</a>
+  <a href="#chat">Chat</a>
+  <a href="#estado">Estado</a>
+  <a href="#eva02">EVA02</a>
+</nav>
+
+<!-- Fijos arriba: la respuesta a un control se ve aunque el control esté lejos.
+     El orden importa: el micrófono va antes que cualquier aviso. -->
+<section id="notices" aria-label="Avisos" tabindex="-1">
+<div role="status"><p id="link-status" class="status"><svg class="icon" aria-hidden="true"><use></use></svg> <span></span></p></div>
+<div role="status">
+  <p id="mic-status" class="banner status" hidden><svg class="icon" aria-hidden="true"><use href="#i-mic"></use></svg> <span><strong>Micrófono en uso</strong> (simulado).</span>
+    <button type="button" id="mic-stop">Detener captura</button></p>
+</div>
+<div role="alert">
+  <p id="alert-status" class="banner status" hidden><svg class="icon" aria-hidden="true"><use href="#i-warn"></use></svg> <span></span>
+    <button type="button" id="alert-ok">Entendido</button></p>
+</div>
+<div role="status"><p id="order-status" class="status" hidden><svg class="icon" aria-hidden="true"><use></use></svg> <span></span></p></div>
+<p id="confirmation-clock" hidden></p>
+</section>
+
+<main>
+  <section id="conexion" aria-labelledby="h-conexion">
+    <h2 id="h-conexion" tabindex="-1">Conexión</h2>
+    <p id="link-help"></p>
+    <button type="button" id="connect">Conectar placa simulada</button>
+  </section>
+
+  <section id="estudio" aria-labelledby="h-estudio" hidden>
+    <h2 id="h-estudio" tabindex="-1">Estudio</h2>
+    <p class="status"><svg id="study-icon" class="icon" aria-hidden="true" hidden><use></use></svg> <span id="study-text"></span></p>
+    <p id="study-link"></p>
+    <div class="actions">
+      <button type="button" data-order="start">Iniciar estudio</button>
+      <button type="button" data-order="pause">Pausar</button>
+      <button type="button" data-order="resume">Reanudar</button>
+      <button type="button" data-order="finish">Terminar</button>
+      <button type="button" data-order="happy">Pedir cara contenta</button>
+    </div>
+  </section>
+
+  <section id="chat" aria-labelledby="h-chat" hidden>
+    <h2 id="h-chat" tabindex="-1">Chat</h2>
+    <p>Asistente simulado: no hay proveedor de IA. Sin IA, la mascota se maneja con los controles.</p>
+    <p id="chat-empty">Todavía no hay mensajes. Escribe el primero.</p>
+    <ul id="chat-log" aria-live="polite" aria-label="Mensajes"></ul>
+    <form id="chat-form" novalidate>
+      <label for="message">Mensaje <input id="message" maxlength="200" autocomplete="off"></label>
+      <p id="chat-error" role="alert"></p>
+      <button type="submit" id="send">Enviar</button>
+    </form>
+    <p><button type="button" id="talk" aria-pressed="false">Hablar (simulado)</button></p>
+    <p id="talk-help"></p>
+  </section>
+
+  <section id="estado" aria-labelledby="h-estado" hidden>
+    <h2 id="h-estado" tabindex="-1">Estado</h2>
+    <dl>
+      <dt>Enlace</dt><dd id="sum-link"></dd>
+      <dt>Cara</dt><dd id="sum-face"></dd>
+      <dt>Estudio</dt><dd id="sum-study"></dd>
+      <dt>Última orden</dt><dd id="sum-order"></dd>
+      <dt>Umbral</dt><dd id="sum-threshold"></dd>
+      <dt>Última lectura</dt><dd id="sum-reading"></dd>
+    </dl>
+  </section>
+
+  <section id="eva02" aria-labelledby="h-eva02" hidden>
+    <h2 id="h-eva02" tabindex="-1">EVA02: lecturas simuladas</h2>
+    <form id="login-form" novalidate>
+      <p>Inicia sesión para ver las lecturas. El ingreso es simulado: usa datos inventados, nunca una contraseña real.</p>
+      <label for="user">Usuario <input id="user" autocomplete="off" maxlength="40"></label>
+      <label for="password">Contraseña <input id="password" type="password" autocomplete="off" maxlength="64"></label>
+      <p id="login-error" role="alert"></p>
+      <button type="submit">Ingresar</button>
+    </form>
+    <div id="private" hidden>
+      <p id="session"></p>
+      <button type="button" id="logout">Cerrar sesión</button>
+
+      <h3 id="h-readings" tabindex="-1">Lecturas</h3>
+      <p>Intensidad de sonido relativa, de 0 a 1 (no son decibeles). Valores <strong>SIMULADOS</strong>.</p>
+      <p id="reading-now"></p>
+      <form id="reading-form" novalidate>
+        <label for="reading">Lectura simulada (0 a 1) <input id="reading" type="number" min="0" max="1" step="0.01" inputmode="decimal"></label>
+        <p id="reading-error" role="alert"></p>
+        <button type="submit" id="reading-send">Enviar lectura simulada</button>
+      </form>
+
+      <h3>Umbral</h3>
+      <p id="threshold-now"></p>
+      <form id="threshold-form" novalidate>
+        <label for="threshold">Umbral (0,01 a 1) <input id="threshold" type="number" min="0.01" max="1" step="0.01" inputmode="decimal"></label>
+        <p>Cambiarlo requiere confirmar en la placa.</p>
+        <p id="threshold-error" role="alert"></p>
+        <button type="submit" id="threshold-send">Pedir cambio de umbral</button>
+      </form>
+
+      <h3>Historial</h3>
+      <p id="history-note"></p>
+      <div class="table">
+        <table>
+          <caption>Lecturas simuladas, la más reciente primero</caption>
+          <thead><tr><th scope="col">N.º</th><th scope="col">Valor</th><th scope="col">Umbral</th><th scope="col">Resultado</th></tr></thead>
+          <tbody id="history"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<aside aria-labelledby="h-sim">
+  <h2 id="h-sim">Simulación de la placa</h2>
+  <p>Estos controles hacen de placa y de red; no existen en la app real.</p>
+  <p id="sim-pending"></p>
+  <div class="actions">
+    <button type="button" id="board-short">Toque breve</button>
+    <button type="button" id="board-double">Doble toque</button>
+    <button type="button" id="board-long">Toque largo</button>
+    <button type="button" id="board-restart">Reiniciar placa simulada</button>
+    <button type="button" id="reply-ok">Confirmar orden (placa)</button>
+    <button type="button" id="reply-no">Rechazar orden (placa)</button>
+    <button type="button" id="cut">Cortar enlace</button>
+    <button type="button" id="restore">Restablecer enlace</button>
+  </div>
+  <label><input type="checkbox" id="fail-link"> Hacer fallar el próximo enlace</label>
+  <label><input type="checkbox" id="fail-login"> Rechazar el próximo ingreso</label>
+</aside>
+
+<script src="mockup.js"></script>
+</body>
+</html>

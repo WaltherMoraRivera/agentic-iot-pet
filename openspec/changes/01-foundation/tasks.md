@@ -16,8 +16,17 @@
 - [ ] 2.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
 
 ## 3. V01 Lenguaje visual, expresiones y flujos de la interfaz
-- [ ] 3.1 Revisar contrato, dependencias y alcance del issue [#3](https://github.com/wmrDev/agentic-iot-pet/issues/3).
-- [ ] 3.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
+- [ ] 3.1 Revisar contrato, dependencias y alcance del issue [#3](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/3).
+- [x] 3.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
+  - Avance 2026-11-25 (parcial): primer boceto de la cara (estilo B) en `docs/diseno/`.
+  - Avance 2026-11-27: mockup navegable `docs/diseno/mockup.html` (conexión, estudio, chat, estado y flujo EVA02 con datos simulados), ceño de «Concentrada» suavizado y prueba `node docs/diseno/probar-mockup.mjs`.
+  - Revisión de Walther incorporada: gestos T04, pausa y sesión interrumpida, espera visible de 15 s y captura exclusiva de voz bajo demanda.
+  - Escenario: WHEN se envía una orden durante el estudio THEN se ve la espera, la confirmación explícita y el regreso al estado vigente.
+  - Escenario: WHEN se corta el enlace durante la espera THEN se ve «Sin conexión» con texto e icono y la orden queda no confirmada, aunque llegue una respuesta tardía.
+  - Escenario: WHEN coinciden captura y aviso THEN tiene prioridad el micrófono.
+  - Escenario: WHEN una lectura simulada supera el umbral THEN hay un aviso con texto e icono.
 - [ ] 3.3 Verificar: Diseñar cara 128×64 y pantallas de conexión, estudio, chat y estado; distinguir desconexión, captura y confirmación sin depender solo del color.
+  - 2026-11-27: pasó en simulador ([registro](../../../docs/pruebas/resultados/2026-11-27-V01-mockup.md)). Pendiente: prueba en OLED físico.
 - [ ] 3.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
+  - 2026-11-27: evidencia simulada adjunta. Pendiente: revisión de Walther y evidencia física.
 
