@@ -4,11 +4,12 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { copyFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { pathToFileURL } from 'node:url';
 
 const PAGE = new URL('./mockup.html', import.meta.url).href;
 const requests = [];
@@ -78,7 +79,8 @@ const open = async (width = 1280, height = 800) => {
   // about:blank entre medio para que cada caso parta con el estado inicial.
   await send('Page.navigate', { url: 'about:blank' });
   await send('Page.navigate', { url: PAGE });
-  await waitFor(`document.readyState === 'complete' && !!document.querySelector('canvas[aria-label]')`, 'cargar mockup.html con la cara', 3000);
+  await waitFor(`document.readyState === 'complete' && !!document.getElementById('face')`, 'cargar mockup.html con la cara', 3000);
+  await faceIs('Sin conexión', 3000);
 };
 
 const waitFor = async (expression, what, timeout = 5000) => {
@@ -101,11 +103,14 @@ const find = async (name, role) => {
 };
 
 const on = async (objectId, fn) =>
-  (await send('Runtime.callFunctionOn', { objectId, functionDeclaration: fn, returnByValue: true })).result.value;
+  (await send('Runtime.callFunctionOn', { objectId, functionDeclaration: fn, returnByValue: true, awaitPromise: true })).result.value;
 
 const click = async (name, role = 'button') => {
-  const box = await on(await find(name, role), `function () {
+  // El OLED va en otro proceso: sin esperar el repintado, Chromium enruta el clic con las posiciones
+  // anteriores al desplazamiento y puede entregarlo al marco.
+  const box = await on(await find(name, role), `async function () {
     this.scrollIntoView({ block: 'center' });
+    await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
     const r = this.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;
     return { x, y, hit: this.contains(document.elementFromPoint(x, y)) };
   }`);
@@ -139,9 +144,33 @@ const keyboard = async name => {
   assert.fail(`«${name}» no se alcanza con Tab`);
 };
 
-const face = () => evaluate(`document.querySelector('canvas').getAttribute('aria-label')`);
-const faceIs = (start, timeout) =>
-  waitFor(`document.querySelector('canvas').getAttribute('aria-label').startsWith('Cara: ${start}')`, `cara «${start}»`, timeout);
+// El OLED es el boceto embebido en un marco aislado (otro proceso): se lee desde su propio destino.
+const frames = new Map();
+const face = async () => {
+  const { targetInfos } = await send('Target.getTargets');
+  const frame = targetInfos.find(t => t.type === 'iframe' && t.url.includes('cara-mascota.html'));
+  if (!frame) return '';
+  if (!frames.has(frame.targetId)) {
+    const attached = await send('Target.attachToTarget', { targetId: frame.targetId, flatten: true });
+    frames.set(frame.targetId, attached.sessionId);
+    await send('Runtime.enable', {}, attached.sessionId);
+  }
+  // Solo vale si hay una cara visible y con píxeles encendidos.
+  const { result } = await send('Runtime.evaluate', { returnByValue: true, expression: `(() => {
+    const shown = [...document.querySelectorAll('canvas')].filter(c => c.checkVisibility());
+    const lit = shown.length === 1 && shown[0].getContext('2d').getImageData(0, 0, 128, 64).data.some((v, i) => i % 4 === 0 && v);
+    return lit ? shown[0].getAttribute('aria-label') : ''; })()` }, frames.get(frame.targetId));
+  return result.value ?? '';
+};
+const faceIs = async (start, timeout = 5000) => {
+  const end = Date.now() + timeout;
+  let shown = await face();
+  while (!shown.startsWith(start) && Date.now() < end) {
+    await sleep(50);
+    shown = await face();
+  }
+  assert.ok(shown.startsWith(start), `se esperaba la cara «${start}» y se ve «${shown}»`);
+};
 const status = id => evaluate(`(() => { const e = document.getElementById('${id}');
   const icon = e.querySelector('svg')?.getBoundingClientRect();
   return { text: e.innerText.trim(), shown: e.checkVisibility(), icon: !!icon && icon.width > 0,
@@ -183,15 +212,17 @@ test('S1: orden durante estudio espera, se confirma y vuelve al estado vigente (
   await open();
   await connect();
   await startStudy();
+  const entries = await evaluate('history.length');
   await keyboard('Pedir cara contenta');
   await says('order-status', 'Esperando confirmación');
   assert.equal((await status('order-status')).kind, '#i-wait');
-  assert.match(await face(), /^Cara: Concentrada/, 'sin respuesta no se muestra éxito');
+  assert.match(await face(), /^Concentrada/, 'sin respuesta no se muestra éxito');
   await keyboard('Confirmar orden (placa)');
   await says('order-status', 'Confirmada');
   assert.deepEqual([(await status('order-status')).icon, (await status('order-status')).kind], [true, '#i-ok']);
   await faceIs('Confirmado');
   await faceIs('Concentrada');
+  assert.equal(await evaluate('history.length'), entries, 'cambiar de cara no llena el historial de Atrás');
 });
 
 test('S2: corte durante la espera deja la orden sin confirmar, aun con respuesta tardía', async () => {
@@ -209,7 +240,7 @@ test('S2: corte durante la espera deja la orden sin confirmar, aun con respuesta
   await click('Confirmar orden (placa)'); // la respuesta llega tarde
   await says('order-status', 'respuesta tardía');
   assert.match((await status('order-status')).text, /no confirmada/);
-  assert.match(await face(), /^Cara: Sin conexión/);
+  assert.match(await face(), /^Sin conexión/);
   await click('Restablecer enlace');
   await says('link-status', 'Conectada');
   assert.match((await status('order-status')).text, /no confirmada/);
@@ -232,7 +263,7 @@ test('S3: si captura y aviso coinciden, manda el micrófono', async () => {
     assert.ok(await evaluate(`!!(document.getElementById('mic-status').compareDocumentPosition(
       document.getElementById('alert-status')) & Node.DOCUMENT_POSITION_FOLLOWING)`), 'el micrófono va antes');
     await sleep(3500); // vence la expresión del aviso; el micrófono sigue
-    assert.match(await face(), /^Cara: Capturando/);
+    assert.match(await face(), /^Capturando/);
     await click('Detener captura');
     await faceIs('Normal');
   }
@@ -311,6 +342,183 @@ test('móvil 375 px: ninguna pantalla desborda a lo ancho', async () => {
     await click(screen, 'link');
     const [content, view] = await evaluate('[document.documentElement.scrollWidth, innerWidth]');
     assert.ok(content <= 375 && view === 375, `${screen}: ${content} px de contenido en ${view} px`);
+  }
+});
+
+// A la vista de verdad: dentro de la ventana y sin nada pintado encima.
+const seen = id => evaluate(`(() => { const e = document.getElementById('${id}'), r = e.getBoundingClientRect();
+  return e.checkVisibility() && r.top >= 0 && r.bottom <= innerHeight
+    && e.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); })()`);
+const assertSeen = async (id, when) => assert.ok(await seen(id), `#${id} fuera de la vista ${when}`);
+const text = id => evaluate(`document.getElementById('${id}').textContent`);
+
+for (const [width, height] of [[375, 667], [320, 568], [667, 375]]) {
+  test(`móvil ${width}×${height}: cada aviso queda a la vista junto al control usado`, async () => {
+    await open(width, height);
+    await connect();
+    await click('Chat', 'link');
+    await click('Hablar (simulado)');
+    await assertSeen('mic-status', 'al pulsar Hablar');
+    await login();
+    await reading('0.9');
+    await assertSeen('mic-status', 'al coincidir captura y aviso');
+    await assertSeen('alert-status', 'al superar el umbral');
+    await click('Estudio', 'link');
+    await click('Iniciar estudio');
+    await assertSeen('order-status', 'al pedir una orden');
+    await click('Confirmar orden (placa)');
+    await assertSeen('order-status', 'al confirmar desde el final de la página');
+    await click('Cortar enlace');
+    await assertSeen('link-status', 'al cortar desde el final de la página');
+  });
+}
+
+// 320×256 equivale a un zoom del 400 %.
+for (const [width, height] of [[375, 667], [320, 256]]) {
+  test(`${width}×${height} con todos los avisos: dejan sitio y no tapan el foco (Tab y Mayús+Tab)`, async () => {
+    await open(width, height);
+    await connect();
+    await login();
+    await click('Chat', 'link');
+    await click('Hablar (simulado)');
+    await click('EVA02', 'link');
+    await reading('0.9');
+    await fill('Umbral (0,01 a 1)', '0.5', 'spinbutton');
+    await click('Pedir cambio de umbral');
+    const [tall, view] = await evaluate("[document.getElementById('notices').offsetHeight, innerHeight]");
+    assert.ok(tall <= view * 0.6 + 1, `los avisos ocupan ${tall} de ${view} px`);
+    await assertSeen('mic-status', 'con todos los avisos');
+    for (const modifiers of [0, 8]) {
+      for (let i = 0; i < 30; i++) {
+        for (const type of ['keyDown', 'keyUp'])
+          await send('Input.dispatchKeyEvent', { type, key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, modifiers });
+        const covered = await evaluate(`(() => { const e = document.activeElement;
+          if (!e || e === document.body) return '';
+          const r = e.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+          return e.contains(hit) || hit?.contains(e) ? '' : e.outerHTML.slice(0, 80); })()`);
+        assert.equal(covered, '', `foco tapado (${modifiers ? 'Mayús+Tab' : 'Tab'})`);
+      }
+    }
+  });
+}
+
+test('un aviso que crece no tapa el control recién usado', async () => {
+  await open(375, 667);
+  await connect();
+  await click('Chat', 'link');
+  // Deja «Hablar» pegado bajo los avisos: al aparecer el del micrófono lo cubriría.
+  await on(await find('Hablar (simulado)', 'button'), `function () {
+    scrollBy(0, this.getBoundingClientRect().top - document.getElementById('notices').offsetHeight - 2);
+    this.focus({ preventScroll: true });
+  }`);
+  await press('Enter', 13, '\r');
+  await faceIs('Capturando');
+  // 5 px: lo que sobresale el anillo de foco.
+  await waitFor(`document.activeElement.getBoundingClientRect().top - 5
+    >= document.getElementById('notices').getBoundingClientRect().bottom`, '«Hablar» y su anillo quedan libres', 2000);
+});
+
+test('más de dos decimales se rechaza: el aviso nunca compara valores que muestra iguales', async () => {
+  await open();
+  await connect();
+  await login();
+  await reading('0.604');
+  await says('reading-error', 'dos decimales');
+  assert.equal((await status('alert-status')).shown, false);
+  assert.match(await bodyText(), /Todavía no hay lecturas/);
+  await fill('Umbral (0,01 a 1)', '0.014', 'spinbutton');
+  await click('Pedir cambio de umbral');
+  await says('threshold-error', 'dos decimales');
+  assert.match(await text('sim-pending'), /no tiene órdenes/);
+  // Ningún valor legítimo de dos decimales debe caer por redondeo binario.
+  assert.deepEqual(await evaluate(`['reading', 'threshold'].flatMap(id => {
+    const input = document.getElementById(id), rejected = [];
+    for (let i = id === 'reading' ? 0 : 1; i <= 100; i++) {
+      input.value = (i / 100).toFixed(2);
+      if (!input.validity.valid) rejected.push(id + ' ' + input.value);
+    }
+    return rejected; })`), []);
+});
+
+test('cerrar sesión cancela el cambio de umbral y no deja su valor a la vista', async () => {
+  await open();
+  await connect();
+  await login();
+  const request = async () => {
+    await fill('Umbral (0,01 a 1)', '0.9', 'spinbutton');
+    await click('Pedir cambio de umbral');
+  };
+  const nothingPrivate = async when => {
+    for (const id of ['order-status', 'sim-pending', 'sum-order', 'sum-threshold'])
+      assert.doesNotMatch(await text(id), /0,90/, `#${id} muestra el umbral ${when}`);
+  };
+  await request();
+  await click('Cerrar sesión');
+  await nothingPrivate('tras cerrar con la orden en espera');
+  await says('order-status', 'canceló');
+  await click('Confirmar orden (placa)');
+  await nothingPrivate('tras el toque tardío en la placa');
+  await login();
+  assert.match(await bodyText(), /Umbral vigente: 0,60/);
+  await request();
+  await click('Confirmar orden (placa)');
+  await says('threshold-now', '0,90');
+  await click('Cerrar sesión');
+  await nothingPrivate('tras cerrar con la orden ya confirmada');
+});
+
+test('los avisos de bloqueo desaparecen cuando se levanta el bloqueo', async () => {
+  await open();
+  await connect();
+  await login();
+  await click('Cortar enlace');
+  await reading('0.5');
+  await says('reading-error', 'Sin conexión');
+  await fill('Umbral (0,01 a 1)', '0.5', 'spinbutton');
+  await click('Pedir cambio de umbral');
+  await says('threshold-error', 'Sin conexión');
+  await click('Restablecer enlace');
+  await says('link-status', 'Conectada');
+  assert.deepEqual([await text('reading-error'), await text('threshold-error')], ['', '']);
+  assert.doesNotMatch(await text('order-status'), /Sin conexión/);
+  await click('Pedir cambio de umbral');
+  await click('Pedir cambio de umbral');
+  await says('threshold-error', 'otra orden');
+  await click('Confirmar orden (placa)');
+  assert.equal(await text('threshold-error'), '');
+  // La nota de una captura anterior no acompaña a la siguiente.
+  await click('Chat', 'link');
+  await click('Hablar (simulado)');
+  await click('Cortar enlace');
+  await says('talk-help', 'Captura cancelada');
+  await click('Restablecer enlace');
+  assert.doesNotMatch(await text('talk-help'), /Captura cancelada/);
+});
+
+test('al vencer los 15 s de captura el foco no se pierde', async () => {
+  await open(375, 667);
+  await connect();
+  await click('Chat', 'link');
+  await click('Hablar (simulado)');
+  await on(await find('Detener captura', 'button'), 'function () { this.focus(); }');
+  await sleep(15500);
+  assert.equal((await status('mic-status')).shown, false);
+  assert.equal(await evaluate('document.activeElement.id'), 'notices');
+});
+
+test('el boceto de la cara funciona descargado solo', async () => {
+  const alone = await mkdtemp(join(tmpdir(), 'pet-boceto-'));
+  try {
+    const copy = join(alone, 'cara-mascota.html');
+    await copyFile(new URL('./cara-mascota.html', import.meta.url), copy);
+    const earlier = errors.length;
+    await send('Page.navigate', { url: pathToFileURL(copy).href });
+    await waitFor(`document.readyState === 'complete' && [...document.querySelectorAll('canvas')]
+      .filter(c => c.getContext('2d').getImageData(0, 0, 128, 64).data.some((v, i) => i % 4 === 0 && v)).length === 9`,
+    'nueve caras dibujadas sin archivos vecinos', 3000);
+    assert.deepEqual(errors.slice(earlier), []);
+  } finally {
+    await rm(alone, { recursive: true, force: true });
   }
 });
 

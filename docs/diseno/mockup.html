@@ -8,17 +8,19 @@
   :root { color-scheme: light dark; font-family: system-ui, sans-serif; line-height: 1.5; } /* ponytail: prototype styles */
   body { max-width: 40rem; margin-inline: auto; padding: 1rem; overflow-wrap: anywhere; } /* ponytail: prototype styles */
   figure { margin: 0; } /* ponytail: prototype styles */
-  canvas { box-sizing: border-box; width: min(100%, 16rem); aspect-ratio: 2; image-rendering: pixelated; background: #000; border: 6px solid #222; border-radius: 6px; } /* ponytail: prototype styles (marco del OLED, igual que cara-mascota.html) */
+  iframe { display: block; width: min(16rem, 100% - 0.75rem); height: auto; aspect-ratio: 2; background: #000; border: 6px solid #222; border-radius: 6px; } /* ponytail: prototype styles (marco del OLED, igual que cara-mascota.html) */
   nav, .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-block: 0.5rem; } /* ponytail: prototype styles */
   nav a { display: inline-flex; align-items: center; min-height: 2.75rem; padding-inline: 0.75rem; border: 1px solid; } /* ponytail: prototype styles */
-  nav a[aria-current="page"] { font-weight: bold; border-width: 3px; } /* ponytail: prototype styles */
+  nav a[aria-current="page"], button[aria-pressed="true"] { font-weight: bold; border-width: 3px; } /* ponytail: prototype styles */
   button, input { font: inherit; min-height: 2.75rem; max-width: 100%; } /* ponytail: prototype styles */
   input[type="checkbox"] { width: 1.5rem; height: 1.5rem; min-height: 0; } /* ponytail: prototype styles */
   label { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; min-height: 2.75rem; } /* ponytail: prototype styles */
   [aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; } /* ponytail: prototype styles */
   :focus-visible { outline: 3px solid; outline-offset: 2px; } /* ponytail: prototype styles */
   svg.icon { width: 1.25em; height: 1.25em; vertical-align: middle; fill: none; stroke: currentColor; stroke-width: 2; } /* ponytail: prototype styles */
-  .banner { border: 2px solid; padding: 0.5rem; margin-block: 0.5rem; } /* ponytail: prototype styles */
+  .banner { border: 2px solid; padding: 0.25rem 0.5rem; margin-block: 0.5rem; } /* ponytail: prototype styles */
+  #notices { position: sticky; top: 0; z-index: 1; box-sizing: border-box; max-height: 60vh; overflow-y: auto; background: Canvas;border-block-end: 1px solid; overflow-anchor: none; } /* ponytail: prototype styles (60vh: con zoom alto deben dejar sitio al contenido) */
+  #notices p { margin-block: 0.25rem; } /* ponytail: prototype styles */
   .status:not([hidden]) { display: flex; align-items: center; gap: 0.5rem; } /* ponytail: prototype styles */
   .status svg, .status button { flex-shrink: 0; } /* ponytail: prototype styles */
   .status span { flex: 1; min-width: 0; } /* ponytail: prototype styles */
@@ -43,8 +45,9 @@
 <noscript><p>Este prototipo necesita JavaScript.</p></noscript>
 
 <figure>
-  <canvas id="face" width="128" height="64" role="img"></canvas>
-  <figcaption id="face-name">Falta <code>cara.js</code> o <code>mockup.js</code> en la misma carpeta.</figcaption>
+  <!-- La cara la dibuja el propio boceto: un solo render para los dos. -->
+  <iframe id="face" title="OLED simulado de la mascota" src="cara-mascota.html#offline" data-face="offline" sandbox="allow-scripts" tabindex="-1"></iframe>
+  <figcaption id="face-name">El prototipo necesita <code>mockup.js</code> y <code>cara-mascota.html</code> en la misma carpeta.</figcaption>
 </figure>
 
 <nav aria-label="Pantallas">
@@ -55,10 +58,12 @@
   <a href="#eva02">EVA02</a>
 </nav>
 
-<!-- El orden importa: el micrófono va antes que cualquier aviso. -->
+<!-- Fijos arriba: la respuesta a un control se ve aunque el control esté lejos.
+     El orden importa: el micrófono va antes que cualquier aviso. -->
+<section id="notices" aria-label="Avisos" tabindex="-1">
 <div role="status"><p id="link-status" class="status"><svg class="icon" aria-hidden="true"><use></use></svg> <span></span></p></div>
 <div role="status">
-  <p id="mic-status" class="banner status" hidden><svg class="icon" aria-hidden="true"><use href="#i-mic"></use></svg> <span><strong>Micrófono en uso</strong> (captura simulada).</span>
+  <p id="mic-status" class="banner status" hidden><svg class="icon" aria-hidden="true"><use href="#i-mic"></use></svg> <span><strong>Micrófono en uso</strong> (simulado).</span>
     <button type="button" id="mic-stop">Detener captura</button></p>
 </div>
 <div role="alert">
@@ -66,6 +71,7 @@
     <button type="button" id="alert-ok">Entendido</button></p>
 </div>
 <div role="status"><p id="order-status" class="status" hidden><svg class="icon" aria-hidden="true"><use></use></svg> <span></span></p></div>
+</section>
 
 <main>
   <section id="conexion" aria-labelledby="h-conexion">
@@ -171,7 +177,6 @@
   <label><input type="checkbox" id="fail-login"> Rechazar el próximo ingreso</label>
 </aside>
 
-<script src="cara.js"></script>
 <script src="mockup.js"></script>
 </body>
 </html>

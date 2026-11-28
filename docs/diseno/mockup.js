@@ -6,6 +6,7 @@
   const SCREENS = ['conexion', 'estudio', 'chat', 'estado', 'eva02'];
   const ORDER_TIMEOUT_MS = 15000; // vencimiento de una confirmación según el plan (T04)
   const CAPTURE_LIMIT_MS = 15000; // máximo de captura según el diseño aprobado
+  const FACE_NAMES = { normal: 'Normal', focus: 'Concentrada', confirmed: 'Confirmado', offline: OFFLINE, capture: 'Capturando', surprised: 'Sorprendida' };
 
   const state = {
     link: 'none', // none | connecting | on | lost | failed
@@ -13,7 +14,7 @@
     pending: null, // orden que la app espera
     board: null, // orden que la placa aún no responde; sobrevive al corte para poder llegar tarde
     sequence: 0,
-    order: null, // último resultado: { icon, text }
+    order: null, // último resultado: { icon, text, private }
     study: { phase: 'idle', ms: 0, since: 0 },
     capture: null, // temporizador de la captura en curso
     talkNote: '',
@@ -24,6 +25,7 @@
     readingCount: 0,
     alert: '',
     replying: false,
+    blocked: new Set(), // errores de formulario causados por el estado
   };
 
   const now = () => performance.now();
@@ -39,10 +41,45 @@
   const flash = (face, ms) => { state.flash = { face, until: now() + ms }; };
   const staleSeconds = () => Math.round((now() - state.lostAt) / 1000);
   const screen = () => SCREENS.find(id => id === location.hash.slice(1)) ?? 'conexion';
-  // Deja a la vista la navegación y los avisos, no solo el título de la pantalla.
+  // Si el título quedó fuera o muy abajo, la vista vuelve a la navegación.
   const focusScreen = () => {
-    document.querySelector('nav').scrollIntoView();
-    $(`h-${screen()}`).focus({ preventScroll: true });
+    const heading = $(`h-${screen()}`);
+    const { top } = heading.getBoundingClientRect();
+    if (top < $('notices').offsetHeight || top > innerHeight / 2) {
+      scrollTo(0, document.querySelector('nav').getBoundingClientRect().top + scrollY);
+    }
+    heading.focus({ preventScroll: true });
+  };
+  // Si un aviso con el foco desaparece (clic, vencimiento o corte), el foco queda en la zona de avisos.
+  const showNotice = (id, shown) => {
+    const element = $(id);
+    if (!shown && element.contains(document.activeElement)) $('notices').focus({ preventScroll: true });
+    element.hidden = !shown;
+  };
+
+  // Errores que dependen del estado y no de lo escrito: se recalculan y se borran solos.
+  const BLOCKERS = {
+    'reading-error': () => state.link === 'on' ? '' : `${OFFLINE}: no llegan lecturas. Conecta la placa.`,
+    'threshold-error': () => {
+      if (state.link !== 'on') return `${OFFLINE}: no se puede cambiar el umbral.`;
+      return state.pending ? 'Hay otra orden en espera.' : '';
+    },
+  };
+  const isBlocked = id => {
+    if (!BLOCKERS[id]()) return false;
+    state.blocked.add(id);
+    return true;
+  };
+  const showError = (id, text) => {
+    state.blocked.delete(id);
+    setText($(id), text);
+  };
+  const renderBlocked = () => {
+    for (const id of state.blocked) {
+      const text = BLOCKERS[id]();
+      setText($(id), text);
+      if (!text) state.blocked.delete(id);
+    }
   };
 
   // El micrófono manda sobre todo; después el enlace, lo temporal y el estado de fondo.
@@ -57,39 +94,41 @@
   // --- Órdenes ---
   const abandonOrder = reason => {
     if (!state.pending) return;
-    clearTimeout(state.pending.timer);
-    state.order = { icon: 'off', text: `${reason} La orden «${state.pending.label}» quedó no confirmada.` };
+    const { timer, label, private: isPrivate } = state.pending;
+    clearTimeout(timer);
+    state.order = { icon: 'off', text: `${reason} La orden «${label}» quedó no confirmada.`, private: isPrivate };
     state.pending = null;
   };
 
+  // `private`: la orden nombra datos que solo se ven con sesión.
   // @spec:01-foundation-v01-lenguaje-visual-expresiones-y-flujos-de-la-interfaz
-  const sendOrder = (label, apply) => {
-    if (state.link !== 'on' || state.pending) return false;
+  const sendOrder = ({ label, apply, private: isPrivate = false }) => {
+    if (state.link !== 'on' || state.pending) return;
     const id = ++state.sequence;
     const timer = setTimeout(() => { abandonOrder('La placa no respondió a tiempo.'); render(); }, ORDER_TIMEOUT_MS);
-    state.pending = { id, label, apply, timer };
-    state.board = { id, label };
-    state.order = { icon: 'wait', text: `Esperando confirmación de la placa: «${label}».` };
-    return true;
+    state.pending = { id, label, apply, timer, private: isPrivate };
+    state.board = { id, label, private: isPrivate };
+    state.order = { icon: 'wait', text: `Esperando confirmación de la placa: «${label}».`, private: isPrivate };
   };
 
   // Solo la orden que sigue en espera puede confirmarse: una respuesta tardía se descarta.
   // @spec:01-foundation-v01-lenguaje-visual-expresiones-y-flujos-de-la-interfaz
-  const receiveReply = ({ id, label }, applied) => {
+  const receiveReply = ({ id, label, private: isPrivate }, applied) => {
+    const report = (icon, text) => { state.order = { icon, text, private: isPrivate }; };
     if (state.pending?.id !== id) {
-      state.order = { icon: 'off', text: `Llegó una respuesta tardía y se descartó: «${label}» sigue no confirmada.` };
+      report('off', `Llegó una respuesta tardía y se descartó: «${label}» sigue no confirmada.`);
       return;
     }
     const { apply, timer } = state.pending;
     clearTimeout(timer);
     state.pending = null;
     if (!applied) {
-      state.order = { icon: 'warn', text: `La placa rechazó «${label}»: no se aplicó. Puedes pedirla otra vez.` };
+      report('warn', `La placa rechazó «${label}»: no se aplicó. Puedes pedirla otra vez.`);
       return;
     }
     apply();
     flash('confirmed', 2000);
-    state.order = { icon: 'ok', text: `Confirmada por la placa: «${label}».` };
+    report('ok', `Confirmada por la placa: «${label}».`);
   };
 
   const boardReply = applied => {
@@ -97,6 +136,18 @@
     if (!order) return;
     state.board = null;
     receiveReply(order, applied);
+  };
+
+  // Lo pedido con sesión no sobrevive a ella: ni se aplica ni deja su valor a la vista.
+  const dropPrivateOrders = () => {
+    if (state.board?.private) state.board = null;
+    if (state.pending?.private) {
+      clearTimeout(state.pending.timer);
+      state.pending = null;
+      state.order = { icon: 'off', text: 'Cerraste sesión: se canceló el cambio de umbral sin aplicarlo.' };
+    } else if (state.order?.private) {
+      state.order = null;
+    }
   };
 
   // --- Estudio ---
@@ -118,6 +169,10 @@
   const canOrder = key => state.link === 'on' && !state.pending && ORDERS[key].from.includes(state.study.phase);
 
   // --- Enlace y captura ---
+  const linkUp = () => {
+    state.link = 'on';
+    state.talkNote = '';
+  };
   const stopCapture = note => {
     clearTimeout(state.capture);
     state.capture = null;
@@ -128,7 +183,8 @@
     if (state.link === 'on' || state.link === 'connecting') return;
     state.link = 'connecting';
     setTimeout(() => {
-      state.link = $('fail-link').checked ? 'failed' : 'on';
+      if ($('fail-link').checked) state.link = 'failed';
+      else linkUp();
       $('fail-link').checked = false;
       render();
     }, 400);
@@ -140,7 +196,7 @@
     state.link = 'lost';
     state.lostAt = now();
     state.flash = null;
-    abandonOrder(`${OFFLINE}: se cortó el enlace.`);
+    abandonOrder('Se cortó el enlace.');
     if (state.capture) stopCapture('Captura cancelada: se perdió el enlace.');
   };
 
@@ -148,6 +204,7 @@
     if (state.capture) {
       stopCapture('Captura detenida.');
     } else if (state.link === 'on') {
+      state.talkNote = '';
       state.capture = setTimeout(() => { stopCapture('Captura detenida al llegar a 15 s.'); render(); }, CAPTURE_LIMIT_MS);
     }
   };
@@ -216,21 +273,27 @@
 
   const logout = () => {
     Object.assign(state, { user: '', alert: '', readings: [], readingCount: 0, flash: null });
+    dropPrivateOrders();
     for (const id of ['login-form', 'reading-form', 'threshold-form']) $(id).reset();
-    for (const id of ['reading-error', 'threshold-error']) setText($(id), '');
+    for (const id of Object.keys(BLOCKERS)) showError(id, '');
     renderHistory();
     render();
     $('user').focus();
   };
 
+  // El paso 0,01 lo valida la plataforma (el formulario es novalidate): se compara lo mismo que se muestra.
+  const numberIn = id => {
+    const input = $(id);
+    return input.validity.valid ? input.valueAsNumber : Number.NaN;
+  };
+
   // @spec:01-foundation-v01-lenguaje-visual-expresiones-y-flujos-de-la-interfaz
   const addReading = () => {
-    const value = $('reading').valueAsNumber;
-    let error = '';
-    if (state.link !== 'on') error = `${OFFLINE}: no llegan lecturas. Conecta la placa.`;
-    else if (!(value >= 0 && value <= 1)) error = 'Escribe un valor entre 0 y 1.';
-    setText($('reading-error'), error);
-    if (error) return;
+    if (isBlocked('reading-error')) return;
+    const value = numberIn('reading');
+    const invalid = Number.isNaN(value);
+    showError('reading-error', invalid ? 'Escribe un valor entre 0 y 1, con dos decimales como máximo.' : '');
+    if (invalid) return;
     const { threshold } = state;
     state.readingCount += 1;
     // shortcut: solo 20 filas en memoria; paginar y persistir cuando exista el historial real (T05).
@@ -243,13 +306,14 @@
   };
 
   const requestThreshold = () => {
-    const value = $('threshold').valueAsNumber;
-    let error = '';
-    if (!(value >= 0.01 && value <= 1)) error = 'El umbral debe estar entre 0,01 y 1.';
-    else if (!sendOrder(`Cambiar umbral a ${format(value)}`, () => { state.threshold = value; })) {
-      error = state.pending ? 'Hay otra orden en espera.' : `${OFFLINE}: no se puede cambiar el umbral.`;
+    const value = numberIn('threshold');
+    if (Number.isNaN(value)) {
+      showError('threshold-error', 'El umbral debe estar entre 0,01 y 1, con dos decimales como máximo.');
+      return;
     }
-    setText($('threshold-error'), error);
+    if (isBlocked('threshold-error')) return;
+    showError('threshold-error', '');
+    sendOrder({ label: `Cambiar umbral a ${format(value)}`, apply: () => { state.threshold = value; }, private: true });
   };
 
   // --- Pintado ---
@@ -279,11 +343,14 @@
 
   const renderFace = () => {
     const key = faceKey();
-    const { label } = PetFace.faces[key];
-    PetFace.draw($('face'), key, now());
-    if ($('face').getAttribute('aria-label') !== `Cara: ${label}`) $('face').setAttribute('aria-label', `Cara: ${label}`);
-    setText($('face-name'), `OLED simulado 128×64 · ${label}`);
-    setText($('sum-face'), label);
+    const oled = $('face');
+    if (oled.dataset.face !== key) {
+      oled.dataset.face = key;
+      // replace y no src: cambiar de cara no debe llenar el historial del botón Atrás.
+      oled.contentWindow.location.replace(new URL(`cara-mascota.html#${key}`, location.href).href);
+    }
+    setText($('face-name'), `OLED simulado 128×64 · ${FACE_NAMES[key]}`);
+    setText($('sum-face'), FACE_NAMES[key]);
   };
 
   const renderStatus = () => {
@@ -291,8 +358,8 @@
     setStatus('link-status', icon, text);
     setText($('link-help'), help);
     setStatus('order-status', state.order?.icon ?? 'wait', state.order?.text ?? '');
-    $('mic-status').hidden = !state.capture;
-    $('alert-status').hidden = !state.alert;
+    showNotice('mic-status', Boolean(state.capture));
+    showNotice('alert-status', Boolean(state.alert));
     setText($('alert-status').querySelector('span'), state.alert);
   };
 
@@ -320,7 +387,7 @@
       : `${state.talkNote} Para hablar hace falta la placa conectada; puedes escribir.`.trim());
     setText($('sum-link'), stale || LINK.on[1]);
     setText($('sum-study'), studyText());
-    setText($('sum-order'), state.order?.text ?? 'Todavía no se ha pedido ninguna.');
+    setText($('sum-order'), state.order?.text ?? 'No hay ninguna orden que mostrar.');
   };
 
   const renderEva = () => {
@@ -341,6 +408,7 @@
     renderControls();
     renderTexts();
     renderEva();
+    renderBlocked();
   };
 
   const route = () => {
@@ -359,7 +427,7 @@
   });
   handle('connect', 'click', connect);
   handle('cut', 'click', cutLink);
-  handle('restore', 'click', () => { if (state.link === 'lost') state.link = 'on'; });
+  handle('restore', 'click', () => { if (state.link === 'lost') linkUp(); });
   handle('reply-ok', 'click', () => boardReply(true));
   handle('reply-no', 'click', () => boardReply(false));
   handle('talk', 'click', toggleTalk);
@@ -368,17 +436,27 @@
   handle('logout', 'click', logout);
   handle('reading-form', 'submit', addReading);
   handle('threshold-form', 'submit', requestThreshold);
-  // El botón de estos avisos desaparece con ellos: el foco vuelve a la pantalla actual.
-  handle('mic-stop', 'click', () => { stopCapture('Captura detenida.'); focusScreen(); });
-  handle('alert-ok', 'click', () => { state.alert = ''; focusScreen(); });
+  handle('mic-stop', 'click', () => stopCapture('Captura detenida.'));
+  handle('alert-ok', 'click', () => { state.alert = ''; });
   for (const button of document.querySelectorAll('[data-order]')) {
     button.addEventListener('click', () => {
       const key = button.dataset.order;
-      if (canOrder(key)) sendOrder(button.textContent, ORDERS[key].apply);
+      if (canOrder(key)) sendOrder({ label: button.textContent, apply: ORDERS[key].apply });
       render();
     });
   }
   addEventListener('hashchange', () => { route(); render(); focusScreen(); });
+
+  // Los avisos fijos no deben tapar el foco: ni al desplazarse ni cuando crecen.
+  const FOCUS_RING_PX = 8; // el anillo de foco sobresale del control y también debe verse
+  new ResizeObserver(() => {
+    const notices = $('notices');
+    document.documentElement.style.scrollPaddingTop = `${notices.offsetHeight + FOCUS_RING_PX}px`;
+    const focused = document.activeElement;
+    if (!focused || focused === document.body || notices.contains(focused)) return;
+    const { top, bottom } = focused.getBoundingClientRect();
+    if (top < notices.getBoundingClientRect().bottom + FOCUS_RING_PX && bottom > 0) focused.scrollIntoView({ block: 'nearest' });
+  }).observe($('notices'));
 
   route();
   renderHistory();
