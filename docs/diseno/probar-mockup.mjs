@@ -106,17 +106,25 @@ const on = async (objectId, fn) =>
   (await send('Runtime.callFunctionOn', { objectId, functionDeclaration: fn, returnByValue: true, awaitPromise: true })).result.value;
 
 const click = async (name, role = 'button') => {
-  // El OLED va en otro proceso: sin esperar el repintado, Chromium enruta el clic con las posiciones
-  // anteriores al desplazamiento y puede entregarlo al marco.
-  const box = await on(await find(name, role), `async function () {
-    this.scrollIntoView({ block: 'center' });
-    await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
-    const r = this.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;
-    return { x, y, hit: this.contains(document.elementFromPoint(x, y)) };
-  }`);
-  assert.ok(box.hit, `«${name}» está tapado y no se puede pulsar`);
-  for (const type of ['mousePressed', 'mouseReleased'])
-    await send('Input.dispatchMouseEvent', { type, x: box.x, y: box.y, button: 'left', clickCount: 1 });
+  const target = await find(name, role);
+  // El OLED va en otro proceso: justo tras cargar o desplazar, Chromium puede perder un evento sintético
+  // (visto 1 de cada 80 cargas). Se comprueba que el clic llegó al control y solo si no llegó se repite.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const box = await on(target, `async function () {
+      this.scrollIntoView({ block: 'center' });
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      this.received = false;
+      this.addEventListener('click', () => { this.received = true; }, { once: true });
+      const r = this.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;
+      return { x, y, hit: this.contains(document.elementFromPoint(x, y)) };
+    }`);
+    assert.ok(box.hit, `«${name}» está tapado y no se puede pulsar`);
+    for (const type of ['mousePressed', 'mouseReleased'])
+      await send('Input.dispatchMouseEvent', { type, x: box.x, y: box.y, button: 'left', clickCount: 1 });
+    if (await on(target, 'function () { return this.received; }')) return;
+    await sleep(100);
+  }
+  assert.fail(`el clic en «${name}» no llega al control`);
 };
 
 const fill = async (name, value, role = 'textbox') => {
