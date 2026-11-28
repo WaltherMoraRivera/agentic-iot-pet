@@ -56,6 +56,8 @@ Pendiente de implementar (no existe todavía en la placa):
 
 - Cancelar la confirmación al perderse el permiso de control sin cambio de época. Hoy solo la cancela un cambio de época (`pet_on_epoch_change`); depende del permiso de T03.
 - Una señal en la placa (LED, sonido o pantalla) mientras hay una confirmación pendiente, para que el usuario sepa que debe tocar.
+- Toque que empezó con la confirmación pendiente y se soltó después de que venció: se ignora y no inicia estudio (D14, punto 3). Hoy sigue el camino normal: sin sesión activa inicia una, y con sesión en curso o en pausa `study_start` devuelve `STUDY_ERR_WRONG_PHASE`.
+- Con la sesión en pausa, un toque breve termina la sesión, igual que `study.finish` (D14, punto 1), con los mismos efectos de cierre: sonido de fin, borrado de la marca de sesión y evento registrado. Hoy el toque no hace nada, y esos efectos solo ocurren cuando la sesión termina en `pet_tick`.
 
 Un reintento con el mismo `request_id` devuelve la respuesta original, como en v1. Si la confirmación ya se resolvió, `GET /v1/state` muestra su estado final.
 

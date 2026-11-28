@@ -7,10 +7,12 @@
 - [ ] 1.3 Verificar: Sesión continúa sin red; audio no genera bucle acústico; gestos y confirmaciones producen un solo efecto; montaje y consumo documentados.
 - [ ] 1.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
   - 2026-11-27: PR #36 unido con revisión de código de agente (D10). Producto y tests compilan en Windows (`b503c73` y `8f0c83a`); los 61 tests y `T04_PLACA.md` quedan pendientes de ejecutar en la placa.
+  - 2026-11-28: D14 fija tres cambios para T04: un toque breve en pausa termina la sesión con sus efectos de cierre, la marca de sesión se guarda fuera del ciclo de 10 ms y se ignora un toque soltado después de que vence la confirmación. Falta implementarlos con tests Unity y medirlos en la placa.
 
 ## 2. T05 Historial, acceso local y sincronización incremental
 - [ ] 2.1 Revisar contrato, dependencias y alcance del issue [#9](https://github.com/WaltherMoraRivera/agentic-iot-pet/issues/9).
 - [ ] 2.2 Implementar o documentar el resultado solicitado y sus pruebas pertinentes.
+  - 2026-11-28: D13 fija la app de Windows emparejada como destino de la sincronización local de #28. Antes de implementarla hay que especificar la operación nueva en este cambio.
 - [ ] 2.3 Verificar: Room persiste en ambas plataformas; páginas repetidas no duplican; borrados no reaparecen; al menos 300 muestras tras corte de cinco minutos.
 - [ ] 2.4 Adjuntar evidencia y revisión cruzada antes de cerrar.
 
